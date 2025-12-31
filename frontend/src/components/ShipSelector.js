@@ -77,7 +77,7 @@ const parseXWingText = (text) => {
   return parts.length > 1 ? parts : text;
 };
 
-const ShipSelector = () => {
+const ShipSelector = ({ editingCharacter = null }) => {
   const [ships, setShips] = useState([]);
   const [currentShipSelection, setCurrentShipSelection] = useState(null);
   const [editingShipSelection, setEditingShipSelection] = useState(null); // Temp state for unsaved changes
@@ -98,7 +98,8 @@ const ShipSelector = () => {
 
     const loadCurrentCharacter = async () => {
       // Load current character for rank-based upgrades
-      const character = apiService.getCurrentCharacter();
+      // Use editingCharacter prop if available, otherwise get saved character
+      const character = editingCharacter || apiService.getCurrentCharacter();
       console.log('Loading character in ShipSelector:', character); // Debug log
       setCurrentCharacter(character);
 
@@ -117,6 +118,21 @@ const ShipSelector = () => {
     loadShips();
     loadCurrentCharacter();
   }, []);
+
+  // Reload character bonuses when editingCharacter prop changes
+  useEffect(() => {
+    const character = editingCharacter || apiService.getCurrentCharacter();
+    setCurrentCharacter(character);
+
+    if (character) {
+      setTimeout(() => {
+        const bonuses = pathUpgradesService.getCharacterBonuses(character);
+        setCharacterBonuses(bonuses);
+      }, 200);
+    } else {
+      setCharacterBonuses(null);
+    }
+  }, [editingCharacter]);
 
   // Handle page refresh/close warnings
   useEffect(() => {
@@ -160,7 +176,7 @@ const ShipSelector = () => {
   // Add another useEffect to listen for character changes more efficiently
   useEffect(() => {
     const handleCharacterChange = async () => {
-      const character = apiService.getCurrentCharacter();
+      const character = editingCharacter || apiService.getCurrentCharacter();
       setCurrentCharacter(character);
 
       if (character) {

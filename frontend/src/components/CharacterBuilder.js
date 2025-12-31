@@ -896,7 +896,7 @@ const CharacterBuilder = () => {
       )}
 
       {/* Ship Selection Section */}
-      <ShipSelector />
+      <ShipSelector editingCharacter={editingCharacter} />
       
       {/* Path Selection Modal */}
       {showPathSelection && (
