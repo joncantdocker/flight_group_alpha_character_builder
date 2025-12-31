@@ -140,6 +140,85 @@ class UpgradeService {
     return characterInitiative >= upgrade.minimum_in;
   }
 
+  // Check if a slot code represents a compound slot (like BB, MM, etc.)
+  isCompoundSlot(slotCode) {
+    return slotCode && slotCode.length > 1 && slotCode.split('').every(char => char === slotCode[0]);
+  }
+
+  // Get the base slot type for compound slots (BB -> B, MM -> M)
+  getBaseSlotType(slotCode) {
+    if (this.isCompoundSlot(slotCode)) {
+      return slotCode[0];
+    }
+    return slotCode;
+  }
+
+  // Get the number of slots required for a compound slot
+  getSlotCount(slotCode) {
+    if (this.isCompoundSlot(slotCode)) {
+      return slotCode.length;
+    }
+    return 1;
+  }
+
+  // Check if ship has enough available slots for a compound upgrade
+  canSelectCompoundUpgrade(shipSlots, selectedUpgrades, slotIndex, upgradeName) {
+    const upgrade = this.getUpgradeByName(upgradeName);
+    if (!upgrade || !upgrade.code) return true;
+    
+    const slotCode = upgrade.code;
+    if (!this.isCompoundSlot(slotCode)) return true;
+    
+    const baseSlotType = this.getBaseSlotType(slotCode);
+    const requiredCount = this.getSlotCount(slotCode);
+    
+    // Count available slots of the base type
+    let availableCount = 0;
+    shipSlots.forEach((slot, index) => {
+      if (slot === baseSlotType && (!selectedUpgrades[index] || index === slotIndex)) {
+        availableCount++;
+      }
+    });
+    
+    return availableCount >= requiredCount;
+  }
+
+  // Get slots that should be blocked when a compound upgrade is selected
+  getBlockedSlots(shipSlots, slotIndex, upgradeName) {
+    const upgrade = this.getUpgradeByName(upgradeName);
+    if (!upgrade || !upgrade.code || !this.isCompoundSlot(upgrade.code)) {
+      return [];
+    }
+    
+    const baseSlotType = this.getBaseSlotType(upgrade.code);
+    const requiredCount = this.getSlotCount(upgrade.code);
+    const blockedSlots = [];
+    
+    let foundCount = 0;
+    for (let i = 0; i < shipSlots.length && foundCount < requiredCount; i++) {
+      if (shipSlots[i] === baseSlotType) {
+        blockedSlots.push(i);
+        foundCount++;
+      }
+    }
+    
+    return blockedSlots;
+  }
+
+  // Check if a slot is blocked by a compound upgrade
+  isSlotBlocked(shipSlots, selectedUpgrades, slotIndex) {
+    // Check if any other selected upgrade blocks this slot
+    for (let i = 0; i < shipSlots.length; i++) {
+      if (i !== slotIndex && selectedUpgrades[i]) {
+        const blockedSlots = this.getBlockedSlots(shipSlots, i, selectedUpgrades[i]);
+        if (blockedSlots.includes(slotIndex)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Check if a slot code represents a special resource (charges/force)
   isSpecialResource(slotCode) {
     return slotCode === 'g' || slotCode === 'h`';

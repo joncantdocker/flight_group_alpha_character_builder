@@ -211,10 +211,26 @@ const ShipSelector = () => {
   const handleUpgradeSelection = (slotIndex, upgradeName) => {
     if (!editingShipSelection) return;
     
-    const newSelectedUpgrades = {
+    let newSelectedUpgrades = {
       ...editingShipSelection.selectedUpgrades,
       [slotIndex]: upgradeName
     };
+    
+    // Handle compound slot blocking
+    if (upgradeName) {
+      const upgrade = upgradeService.getUpgradeByName(upgradeName);
+      if (upgrade && upgradeService.isCompoundSlot(upgrade.code)) {
+        const slots = shipService.formatUpgradeSlots(editingShipSelection.selectedShip.upgrades.join(''));
+        const blockedSlots = upgradeService.getBlockedSlots(slots, slotIndex, upgradeName);
+        
+        // Clear any upgrades in slots that will be blocked (except the current slot)
+        blockedSlots.forEach(blockedIndex => {
+          if (blockedIndex !== slotIndex && newSelectedUpgrades[blockedIndex]) {
+            newSelectedUpgrades[blockedIndex] = '';
+          }
+        });
+      }
+    }
     
     setEditingShipSelection({
       ...editingShipSelection,
@@ -294,6 +310,26 @@ const ShipSelector = () => {
           const availableUpgrades = upgradeService.getUpgradesForSlotCode(slot);
           const characterInitiative = characterBonuses ? characterBonuses.initiative : 1;
           
+          // Check if this slot is blocked by a compound upgrade
+          const isSlotBlocked = upgradeService.isSlotBlocked(
+            slots, 
+            editingShipSelection?.selectedUpgrades || {}, 
+            index
+          );
+          
+          // Filter upgrades based on compound slot availability
+          const selectableUpgrades = availableUpgrades.filter(upgrade => {
+            if (editingShipSelection?.selectedUpgrades[index] === upgrade.name) {
+              return true; // Always show currently selected upgrade
+            }
+            return upgradeService.canSelectCompoundUpgrade(
+              slots,
+              editingShipSelection?.selectedUpgrades || {},
+              index,
+              upgrade.name
+            );
+          });
+          
           return (
             <div key={index} style={{ marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -301,15 +337,16 @@ const ShipSelector = () => {
                   style={{
                     fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
                     fontSize: '16px',
-                    background: '#f8f9fa',
+                    background: isSlotBlocked ? '#ffebee' : '#f8f9fa',
                     padding: '4px 8px',
                     borderRadius: '4px',
-                    border: '1px solid #dee2e6'
+                    border: isSlotBlocked ? '1px solid #f44336' : '1px solid #dee2e6',
+                    opacity: isSlotBlocked ? 0.5 : 1
                   }}
                 >
                   {slot}
+                  {isSlotBlocked && <span style={{ fontSize: '12px', color: '#f44336', fontFamily: 'Arial, sans-serif' }}> (Blocked)</span>}
                 </span>
-                
                 <Select
                   value={editingShipSelection?.selectedUpgrades[index] ? 
                     { value: editingShipSelection.selectedUpgrades[index], label: editingShipSelection.selectedUpgrades[index] } : 
@@ -318,7 +355,7 @@ const ShipSelector = () => {
                   onChange={(selectedOption) => handleUpgradeSelection(index, selectedOption ? selectedOption.value : '')}
                   options={[
                     { value: '', label: '-- No Upgrade --' },
-                    ...availableUpgrades.map((upgrade) => {
+                    ...selectableUpgrades.map((upgrade) => {
                       const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
                       return {
                         value: upgrade.name,
@@ -401,6 +438,7 @@ const ShipSelector = () => {
                     })
                   }}
                   isClearable
+                  isDisabled={isSlotBlocked}
                 />
               </div>
               
