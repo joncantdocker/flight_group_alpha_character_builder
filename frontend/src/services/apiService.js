@@ -67,7 +67,15 @@ class ApiService {
     await this.service.simulateDelay(100);
     return this.service.saveAll();
   }
+  // Import/Export functionality
+  exportCharacter(character) {
+    return this.service.exportCharacter(character);
+  }
 
+  async importCharacter(characterString) {
+    await this.service.simulateDelay();
+    return this.service.importCharacter(characterString);
+  }
   // Ship selection persistence
   getCurrentShipSelection() {
     return this.service.getCurrentShipSelection();
@@ -79,6 +87,10 @@ class ApiService {
 
   clearShipSelection() {
     return this.service.clearShipSelection();
+  }
+
+  copyShipSelection(sourceCharacterId, targetCharacterId) {
+    return this.service.copyShipSelection(sourceCharacterId, targetCharacterId);
   }
 }
 

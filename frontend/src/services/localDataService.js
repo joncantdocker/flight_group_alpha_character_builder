@@ -212,6 +212,118 @@ class LocalDataService {
     localStorage.removeItem(shipSelectionKey);
     return true;
   }
+
+  // Copy ship selection from one character to another
+  copyShipSelection(sourceCharacterId, targetCharacterId) {
+    if (!sourceCharacterId || !targetCharacterId) return false;
+    
+    const sourceKey = `${this.shipSelectionKey}_${sourceCharacterId}`;
+    const targetKey = `${this.shipSelectionKey}_${targetCharacterId}`;
+    
+    const sourceSelection = localStorage.getItem(sourceKey);
+    if (sourceSelection) {
+      // Parse and update timestamp for the copy
+      const selectionData = JSON.parse(sourceSelection);
+      selectionData.timestamp = new Date().toISOString();
+      
+      localStorage.setItem(targetKey, JSON.stringify(selectionData));
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Import/Export functionality
+  exportCharacter(character) {
+    try {
+      // Create a clean export object without sensitive data
+      const exportData = {
+        version: '1.0.0',
+        exported: new Date().toISOString(),
+        character: {
+          callsign: character.callsign,
+          bankedXP: character.bankedXP,
+          loadoutXP: character.loadoutXP,
+          pathXP: character.pathXP,
+          rank: character.rank,
+          path: character.path,
+          createdAt: character.createdAt
+        }
+      };
+      
+      // Convert to base64 for easy sharing
+      const jsonString = JSON.stringify(exportData);
+      const base64String = btoa(jsonString);
+      
+      return `CBX1_${base64String}`; // CBX1 = Character Builder Export v1
+    } catch (error) {
+      throw new Error('Failed to export character: ' + error.message);
+    }
+  }
+
+  importCharacter(characterString) {
+    try {
+      // Validate format
+      if (!characterString || !characterString.startsWith('CBX1_')) {
+        throw new Error('Invalid character data format. Please ensure you copied the complete export string.');
+      }
+      
+      // Extract and decode base64
+      const base64Data = characterString.substring(5); // Remove 'CBX1_' prefix
+      const jsonString = atob(base64Data);
+      const importData = JSON.parse(jsonString);
+      
+      // Validate structure
+      if (!importData.character || !importData.version) {
+        throw new Error('Invalid character data structure.');
+      }
+      
+      const char = importData.character;
+      
+      // Validate required fields
+      if (!char.callsign || typeof char.rank !== 'number' || 
+          typeof char.bankedXP !== 'number' || typeof char.loadoutXP !== 'number' || 
+          typeof char.pathXP !== 'number') {
+        throw new Error('Missing or invalid required character fields.');
+      }
+      
+      // Validate ranges
+      if (char.rank < 1 || char.rank > 8) {
+        throw new Error('Invalid rank. Rank must be between 1 and 8.');
+      }
+      
+      if (char.bankedXP < 0 || char.loadoutXP < 0 || char.pathXP < 0) {
+        throw new Error('XP values cannot be negative.');
+      }
+      
+      // Check if callsign already exists
+      const existing = this.getCharacters().find(c => c.callsign === char.callsign);
+      if (existing) {
+        throw new Error(`A character with callsign "${char.callsign}" already exists. Please rename the existing character first.`);
+      }
+      
+      // Create new character with imported data
+      const newCharacter = this.addCharacter({
+        callsign: char.callsign,
+        bankedXP: char.bankedXP,
+        loadoutXP: char.loadoutXP,
+        pathXP: char.pathXP,
+        rank: char.rank,
+        path: char.path || 'None'
+      });
+      
+      return {
+        success: true,
+        character: newCharacter,
+        message: `Successfully imported character "${char.callsign}"`
+      };
+    } catch (error) {
+      if (error.name === 'SyntaxError') {
+        throw new Error('Invalid character data format. The import string appears to be corrupted.');
+      }
+      throw error;
+    }
+  }
 }
 
 const localDataServiceInstance = new LocalDataService();

@@ -19,6 +19,11 @@ const CharacterBuilder = () => {
   const [showNewCharacterForm, setShowNewCharacterForm] = useState(false);
   const [newCharacterCallsign, setNewCharacterCallsign] = useState('');
   
+  // Import/Export functionality
+  const [showImportExport, setShowImportExport] = useState(false);
+  const [exportString, setExportString] = useState('');
+  const [importString, setImportString] = useState('');
+  
   // XP Transfer amounts
   const [addBankedAmount, setAddBankedAmount] = useState(0);
   const [toLoadoutAmount, setToLoadoutAmount] = useState(0);
@@ -364,9 +369,15 @@ const CharacterBuilder = () => {
       
       // If there are unsaved changes, save them first
       if (hasUnsavedChanges && editingCharacter) {
-        await apiService.updateCharacter(editingCharacter.id, editingCharacter);
-        setCurrentCharacter(editingCharacter);
+        const savedChar = await apiService.updateCharacter(editingCharacter.id, editingCharacter);
+        setCurrentCharacter(savedChar);
+        setEditingCharacter({ ...savedChar });
         setHasUnsavedChanges(false);
+        
+        // Update in characters list
+        setCharacters(chars => 
+          chars.map(char => char.id === savedChar.id ? savedChar : char)
+        );
       }
       
       // Save ship selection if available
@@ -381,6 +392,116 @@ const CharacterBuilder = () => {
       showSnackbar(err.message, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportCharacter = () => {
+    if (!currentCharacter) {
+      showSnackbar('No character selected to export', 'error');
+      return;
+    }
+    
+    try {
+      const exportedString = apiService.exportCharacter(currentCharacter);
+      setExportString(exportedString);
+      setShowImportExport(true);
+      showSnackbar(`Character "${currentCharacter.callsign}" exported successfully!`, 'success');
+    } catch (err) {
+      showSnackbar(err.message, 'error');
+    }
+  };
+
+  const importCharacter = async () => {
+    if (!importString.trim()) {
+      showSnackbar('Please enter a character export string', 'error');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const result = await apiService.importCharacter(importString.trim());
+      
+      if (result.success) {
+        await fetchCharacters();
+        switchCharacter(result.character.id);
+        setImportString('');
+        setShowImportExport(false);
+        showSnackbar(result.message, 'success');
+      }
+    } catch (err) {
+      showSnackbar(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const duplicateCharacter = async () => {
+    if (!currentCharacter) {
+      showSnackbar('No character selected to duplicate', 'error');
+      return;
+    }
+    
+    if (!checkUnsavedChanges()) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // Generate a unique callsign
+      const baseCallsign = currentCharacter.callsign;
+      const existingCallsigns = characters.map(char => char.callsign);
+      let duplicateCallsign = `${baseCallsign} Copy`;
+      let counter = 2;
+      
+      while (existingCallsigns.includes(duplicateCallsign)) {
+        duplicateCallsign = `${baseCallsign} Copy ${counter}`;
+        counter++;
+      }
+      
+      // Create new character with same data but new callsign
+      const duplicateChar = await apiService.createCharacter({
+        callsign: duplicateCallsign,
+        bankedXP: currentCharacter.bankedXP,
+        loadoutXP: currentCharacter.loadoutXP,
+        pathXP: currentCharacter.pathXP,
+        rank: currentCharacter.rank,
+        path: currentCharacter.path
+      });
+      
+      // Copy ship selection data to the new character
+      const shipCopied = apiService.copyShipSelection(currentCharacter.id, duplicateChar.id);
+      
+      await fetchCharacters();
+      switchCharacter(duplicateChar.id);
+      
+      let message = `Created duplicate character: ${duplicateCallsign}`;
+      if (shipCopied) {
+        message += ' (including ship selection)';
+      }
+      
+      setMessage(message);
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      showSnackbar(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showSnackbar('Copied to clipboard!', 'success');
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showSnackbar('Copied to clipboard!', 'success');
     }
   };
 
@@ -495,6 +616,30 @@ const CharacterBuilder = () => {
           >
             💾 Save All
           </button>
+          <button 
+            className="button" 
+            onClick={exportCharacter} 
+            disabled={loading || !currentCharacter}
+            style={{ fontSize: '14px', padding: '8px 16px', background: '#17a2b8' }}
+          >
+            Export Character
+          </button>
+          <button 
+            className="button" 
+            onClick={() => setShowImportExport(true)} 
+            disabled={loading}
+            style={{ fontSize: '14px', padding: '8px 16px', background: '#28a745' }}
+          >
+            Import Character
+          </button>
+          <button 
+            className="button" 
+            onClick={duplicateCharacter} 
+            disabled={loading || !currentCharacter}
+            style={{ fontSize: '14px', padding: '8px 16px', background: '#6f42c1' }}
+          >
+            Duplicate Character
+          </button>
         </div>
       </div>
 
@@ -508,6 +653,117 @@ const CharacterBuilder = () => {
           marginBottom: '20px' 
         }}>
           {message}
+        </div>
+      )}
+
+      {/* Import/Export Panel */}
+      {showImportExport && (
+        <div className="card" style={{ background: '#f8f9fa', border: '2px solid #007bff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3>Import/Export Character</h3>
+            <button
+              onClick={() => {
+                setShowImportExport(false);
+                setExportString('');
+                setImportString('');
+              }}
+              style={{ 
+                padding: '4px 8px', 
+                background: '#6c757d', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '4px',
+                fontSize: '12px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          
+          {/* Export Section */}
+          {exportString && (
+            <div style={{ marginBottom: '20px' }}>
+              <h4>📤 Export Data</h4>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+                Copy this string to share your character:
+              </p>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <textarea
+                  value={exportString}
+                  readOnly
+                  style={{
+                    width: '100%',
+                    height: '80px',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    fontSize: '12px',
+                    resize: 'vertical',
+                    background: '#f8f9fa'
+                  }}
+                />
+                <button
+                  onClick={() => copyToClipboard(exportString)}
+                  style={{
+                    padding: '8px 12px',
+                    background: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  📋 Copy
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Import Section */}
+          <div>
+            <h4>📥 Import Character</h4>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+              Paste a character export string below:
+            </p>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+              <textarea
+                value={importString}
+                onChange={(e) => setImportString(e.target.value)}
+                placeholder="Paste character export string here..."
+                style={{
+                  width: '100%',
+                  height: '80px',
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  resize: 'vertical'
+                }}
+              />
+              <button
+                onClick={importCharacter}
+                disabled={loading || !importString.trim()}
+                style={{
+                  padding: '8px 12px',
+                  background: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  whiteSpace: 'nowrap',
+                  opacity: (!importString.trim() || loading) ? 0.6 : 1
+                }}
+              >
+                {loading ? '⏳' : '📥'} Import
+              </button>
+            </div>
+            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+              Note: Character callsign must be unique. Rename existing characters if there's a conflict.
+            </p>
+          </div>
         </div>
       )}
 
