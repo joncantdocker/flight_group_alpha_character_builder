@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/flight_group_alpha_character_builder/static/css/main.0f078bcd.css",
+    "main.js": "/flight_group_alpha_character_builder/static/js/main.b85c446d.js",
+    "static/media/x-wing-ships.ttf": "/flight_group_alpha_character_builder/static/media/x-wing-ships.9c814506bc4e2ecf462b.ttf",
+    "static/media/x-wing-symbols.ttf": "/flight_group_alpha_character_builder/static/media/x-wing-symbols.0001df728fb48de33bde.ttf",
+    "index.html": "/flight_group_alpha_character_builder/index.html",
+    "main.0f078bcd.css.map": "/flight_group_alpha_character_builder/static/css/main.0f078bcd.css.map",
+    "main.b85c446d.js.map": "/flight_group_alpha_character_builder/static/js/main.b85c446d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0f078bcd.css",
+    "static/js/main.b85c446d.js"
+  ]
+}
