@@ -22,33 +22,33 @@ const xwingRedFontStyle = {
 // Utility function to parse X-Wing special formatting codes
 const parseXWingText = (text) => {
   if (!text) return text;
-  
+
   const parts = [];
   let currentIndex = 0;
   let partKey = 0;
-  
+
   // Find all special formatting codes
   const regex = /\[([^\]]+)\]/g;
   let match;
-  
+
   while ((match = regex.exec(text)) !== null) {
     // Add text before the match
     if (match.index > currentIndex) {
       parts.push(text.substring(currentIndex, match.index));
     }
-    
+
     const code = match[1];
-    
+
     // Handle different formatting codes
     if (code.startsWith('r:')) {
       // Red colored symbol: [r:l] -> red 'l' in x-wing-symbols font
       const symbol = code.substring(2);
       parts.push(
-        <span 
+        <span
           key={`red-${partKey++}`}
-          style={{ 
-            fontFamily: 'X-Wing-Symbols, Arial, sans-serif', 
-            color: '#dc3545' 
+          style={{
+            fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
+            color: '#dc3545'
           }}
         >
           {symbol}
@@ -57,7 +57,7 @@ const parseXWingText = (text) => {
     } else {
       // Regular symbol: [}] or [MM] -> symbol in x-wing-symbols font
       parts.push(
-        <span 
+        <span
           key={`symbol-${partKey++}`}
           style={{ fontFamily: 'X-Wing-Symbols, Arial, sans-serif' }}
         >
@@ -65,15 +65,15 @@ const parseXWingText = (text) => {
         </span>
       );
     }
-    
+
     currentIndex = regex.lastIndex;
   }
-  
+
   // Add remaining text
   if (currentIndex < text.length) {
     parts.push(text.substring(currentIndex));
   }
-  
+
   return parts.length > 1 ? parts : text;
 };
 
@@ -91,17 +91,17 @@ const ShipSelector = () => {
       await shipService.waitForLoad();
       const shipList = shipService.getShipList();
       setShips(shipList);
-      
+
       // Now load saved ship selection after ships are loaded
       loadSavedShipSelection();
     };
-    
+
     const loadCurrentCharacter = async () => {
       // Load current character for rank-based upgrades
       const character = apiService.getCurrentCharacter();
       console.log('Loading character in ShipSelector:', character); // Debug log
       setCurrentCharacter(character);
-      
+
       if (character) {
         // Wait for path service to load if needed
         setTimeout(() => {
@@ -113,7 +113,7 @@ const ShipSelector = () => {
         setCharacterBonuses(null);
       }
     };
-    
+
     loadShips();
     loadCurrentCharacter();
   }, []);
@@ -159,7 +159,7 @@ const ShipSelector = () => {
     const handleStorageChange = () => {
       const character = apiService.getCurrentCharacter();
       setCurrentCharacter(character);
-      
+
       if (character) {
         setTimeout(() => {
           const bonuses = pathUpgradesService.getCharacterBonuses(character);
@@ -172,7 +172,7 @@ const ShipSelector = () => {
 
     // Listen for localStorage changes
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -210,19 +210,19 @@ const ShipSelector = () => {
 
   const handleUpgradeSelection = (slotIndex, upgradeName) => {
     if (!editingShipSelection) return;
-    
+
     let newSelectedUpgrades = {
       ...editingShipSelection.selectedUpgrades,
       [slotIndex]: upgradeName
     };
-    
+
     // Handle compound slot blocking
     if (upgradeName) {
       const upgrade = upgradeService.getUpgradeByName(upgradeName);
       if (upgrade && upgradeService.isCompoundSlot(upgrade.code)) {
         const slots = shipService.formatUpgradeSlots(editingShipSelection.selectedShip.upgrades.join(''));
         const blockedSlots = upgradeService.getBlockedSlots(slots, slotIndex, upgradeName);
-        
+
         // Clear any upgrades in slots that will be blocked (except the current slot)
         blockedSlots.forEach(blockedIndex => {
           if (blockedIndex !== slotIndex && newSelectedUpgrades[blockedIndex]) {
@@ -231,7 +231,7 @@ const ShipSelector = () => {
         });
       }
     }
-    
+
     setEditingShipSelection({
       ...editingShipSelection,
       selectedUpgrades: newSelectedUpgrades
@@ -241,12 +241,12 @@ const ShipSelector = () => {
 
   const handleRankUpgradeSelection = (slotIndex, upgradeName) => {
     if (!editingShipSelection) return;
-    
+
     const newSelectedRankUpgrades = {
       ...editingShipSelection.selectedRankUpgrades,
       [slotIndex]: upgradeName
     };
-    
+
     setEditingShipSelection({
       ...editingShipSelection,
       selectedRankUpgrades: newSelectedRankUpgrades
@@ -271,14 +271,14 @@ const ShipSelector = () => {
   // Save current ship selection
   const saveShipSelection = async () => {
     if (!editingShipSelection || !hasUnsavedChanges) return;
-    
+
     try {
       apiService.setCurrentShipSelection(
-        editingShipSelection.shipKey, 
-        editingShipSelection.selectedUpgrades, 
+        editingShipSelection.shipKey,
+        editingShipSelection.selectedUpgrades,
         editingShipSelection.selectedRankUpgrades
       );
-      
+
       setCurrentShipSelection({ ...editingShipSelection });
       setHasUnsavedChanges(false);
     } catch (err) {
@@ -303,20 +303,20 @@ const ShipSelector = () => {
 
   const renderUpgradeSlots = (upgradeString) => {
     const slots = shipService.formatUpgradeSlots(upgradeString);
-    
+
     return (
       <div>
         {slots.map((slot, index) => {
           const availableUpgrades = upgradeService.getUpgradesForSlotCode(slot);
           const characterInitiative = characterBonuses ? characterBonuses.initiative : 1;
-          
+
           // Check if this slot is blocked by a compound upgrade
           const isSlotBlocked = upgradeService.isSlotBlocked(
-            slots, 
-            editingShipSelection?.selectedUpgrades || {}, 
+            slots,
+            editingShipSelection?.selectedUpgrades || {},
             index
           );
-          
+
           // Filter upgrades based on compound slot availability
           const selectableUpgrades = availableUpgrades.filter(upgrade => {
             if (editingShipSelection?.selectedUpgrades[index] === upgrade.name) {
@@ -329,7 +329,7 @@ const ShipSelector = () => {
               upgrade.name
             );
           });
-          
+
           return (
             <div key={index} style={{ marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -348,8 +348,8 @@ const ShipSelector = () => {
                   {isSlotBlocked && <span style={{ fontSize: '12px', color: '#f44336', fontFamily: 'Arial, sans-serif' }}> (Blocked)</span>}
                 </span>
                 <Select
-                  value={editingShipSelection?.selectedUpgrades[index] ? 
-                    { value: editingShipSelection.selectedUpgrades[index], label: editingShipSelection.selectedUpgrades[index] } : 
+                  value={editingShipSelection?.selectedUpgrades[index] ?
+                    { value: editingShipSelection.selectedUpgrades[index], label: editingShipSelection.selectedUpgrades[index] } :
                     null
                   }
                   onChange={(selectedOption) => handleUpgradeSelection(index, selectedOption ? selectedOption.value : '')}
@@ -367,11 +367,11 @@ const ShipSelector = () => {
                   ]}
                   formatOptionLabel={({ label, upgrade, isInvalid }) => {
                     if (!upgrade) return <span>{label}</span>;
-                    
+
                     // Simple X-Wing symbol replacement
                     const renderRestrictions = (text) => {
                       if (!text) return null;
-                      
+
                       // Handle [r:symbol] format
                       if (text.includes('[r:')) {
                         return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
@@ -391,7 +391,7 @@ const ShipSelector = () => {
                           return part;
                         });
                       }
-                      
+
                       // Handle regular [symbol] format
                       return text.split(/(\[[^\]]+\])/).map((part, index) => {
                         if (part.startsWith('[') && part.endsWith(']')) {
@@ -404,7 +404,7 @@ const ShipSelector = () => {
                         return part;
                       });
                     };
-                    
+
                     return (
                       <div style={{
                         color: isInvalid ? '#6c757d' : 'inherit',
@@ -416,9 +416,7 @@ const ShipSelector = () => {
                         {upgrade.restrictions && (
                           <span style={{ color: '#6c757d' }}> - {renderRestrictions(upgrade.restrictions)}</span>
                         )}
-                        {isInvalid && (
-                          <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in}]</span>
-                        )}
+                        {isInvalid ? <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in > 0 ? upgrade.minimum_in : 1}]</span> : null}
                       </div>
                     );
                   }}
@@ -441,7 +439,7 @@ const ShipSelector = () => {
                   isDisabled={isSlotBlocked}
                 />
               </div>
-              
+
               {editingShipSelection?.selectedUpgrades[index] && (() => {
                 const selectedUpgrade = upgradeService.getUpgradeByName(editingShipSelection.selectedUpgrades[index]);
                 if (selectedUpgrade) {
@@ -455,7 +453,7 @@ const ShipSelector = () => {
                       fontSize: '12px',
                       color: isInvalid ? '#721c24' : '#6c757d',
                       border: isInvalid ? '1px solid #f5c6cb' : 'none'
-                    }}>                      
+                    }}>
                       <div style={{ marginBottom: '5px' }}>
                         <strong>Cost:</strong> {String(Number(selectedUpgrade.cpp_cost))} XP
                       </div>
@@ -491,7 +489,7 @@ const ShipSelector = () => {
                               }
                               return part;
                             });
-                          })()} 
+                          })()}
                         </div>
                       )}
                       {selectedUpgrade.minimum_in && Number(selectedUpgrade.minimum_in) > 0 ? (
@@ -501,7 +499,7 @@ const ShipSelector = () => {
                       ) : null}
                       {isInvalid ? (
                         <div style={{ fontWeight: 'bold', color: '#dc3545', marginBottom: '5px' }}>
-                          INVALID: Requires Initiative {String(Number(selectedUpgrade.minimum_in || 0))}
+                          INVALID: Requires Initiative {String(Number(selectedUpgrade.minimum_in || 1))}
                         </div>
                       ) : null}
                       <br />
@@ -524,20 +522,20 @@ const ShipSelector = () => {
         <h3>Ship Selection</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {hasUnsavedChanges && (
-            <span style={{ 
-              color: '#dc3545', 
-              fontSize: '14px', 
-              fontWeight: 'bold' 
+            <span style={{
+              color: '#dc3545',
+              fontSize: '14px',
+              fontWeight: 'bold'
             }}>
               ● Unsaved Changes
             </span>
           )}
           {hasUnsavedChanges && (
             <>
-              <button 
+              <button
                 onClick={discardChanges}
-                style={{ 
-                  background: '#6c757d', 
+                style={{
+                  background: '#6c757d',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -548,10 +546,10 @@ const ShipSelector = () => {
               >
                 🚫 Discard
               </button>
-              <button 
+              <button
                 onClick={saveShipSelection}
-                style={{ 
-                  background: '#28a745', 
+                style={{
+                  background: '#28a745',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -571,7 +569,7 @@ const ShipSelector = () => {
           )}
         </div>
       </div>
-      
+
       {/* Ship Dropdown */}
       <div style={{ marginBottom: '20px' }}>
         <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
@@ -605,8 +603,8 @@ const ShipSelector = () => {
           borderRadius: '8px',
           border: '1px solid #dee2e6'
         }}>
-          <h4 style={{ 
-            margin: '0 0 15px 0', 
+          <h4 style={{
+            margin: '0 0 15px 0',
             color: '#007bff',
             display: 'flex',
             alignItems: 'center',
@@ -620,7 +618,7 @@ const ShipSelector = () => {
             </span>
             {editingShipSelection.selectedShip.name}
           </h4>
-          
+
           {/* Loadout XP Cost */}
           <div style={{
             padding: '10px',
@@ -630,40 +628,40 @@ const ShipSelector = () => {
             marginBottom: '20px'
           }}>
             {/* XP Cost Display */}
-          <div style={{
-            display: 'flex',
-            gap: '20px',
-            alignItems: 'flex-start',
-            marginBottom: '15px'
-          }}>
-            {/* Loadout XP Cost */}
-            <div>
-              <h6 style={{ margin: '0 0 5px 0', color: '#856404' }}>Loadout XP Required:</h6>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '18px', 
-                fontWeight: 'bold', 
-                color: '#856404' 
-              }}>
-                {calculateTotalLoadoutCost()} XP
-              </p>
-            </div>
-            
-            {/* Path XP Cost */}
-            {calculateTotalPathCost() > 0 && (
+            <div style={{
+              display: 'flex',
+              gap: '20px',
+              alignItems: 'flex-start',
+              marginBottom: '15px'
+            }}>
+              {/* Loadout XP Cost */}
               <div>
-                <h6 style={{ margin: '0 0 5px 0', color: '#6f42c1' }}>Path XP Required:</h6>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '16px', 
-                  fontWeight: 'bold', 
-                  color: '#6f42c1' 
+                <h6 style={{ margin: '0 0 5px 0', color: '#856404' }}>Loadout XP Required:</h6>
+                <p style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#856404'
                 }}>
-                  {calculateTotalPathCost()} XP
+                  {calculateTotalLoadoutCost()} XP
                 </p>
               </div>
-            )}
-          </div>
+
+              {/* Path XP Cost */}
+              {calculateTotalPathCost() > 0 && (
+                <div>
+                  <h6 style={{ margin: '0 0 5px 0', color: '#6f42c1' }}>Path XP Required:</h6>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: '#6f42c1'
+                  }}>
+                    {calculateTotalPathCost()} XP
+                  </p>
+                </div>
+              )}
+            </div>
             {(editingShipSelection && (Object.keys(editingShipSelection.selectedUpgrades).length > 0 || Object.keys(editingShipSelection.selectedRankUpgrades).length > 0)) && (
               <div style={{ fontSize: '12px', marginTop: '10px' }}>
                 <strong>Selected Upgrades:</strong>
@@ -679,7 +677,7 @@ const ShipSelector = () => {
                       </div>
                     );
                   })}
-                
+
                 {/* Rank Upgrades */}
                 {Object.entries(editingShipSelection.selectedRankUpgrades)
                   .filter(([, upgradeName]) => upgradeName)
@@ -695,7 +693,7 @@ const ShipSelector = () => {
               </div>
             )}
           </div>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
             <div>
               <h5 style={{ margin: '0 0 10px 0' }}>Ship Upgrade Slots:</h5>
@@ -707,7 +705,7 @@ const ShipSelector = () => {
                 </p>
               )}
             </div>
-            
+
             <div>
               <h5 style={{ margin: '0 0 10px 0' }}>Rank-Based Upgrades:</h5>
               {currentCharacter && characterBonuses ? (
@@ -717,7 +715,7 @@ const ShipSelector = () => {
                       <p style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#6c757d' }}>
                         From {currentCharacter.callsign} (Rank {currentCharacter.rank}, {currentCharacter.path} Path):
                       </p>
-                      
+
                       {/* Special Resources (Charges and Force) */}
                       {(() => {
                         const resources = upgradeService.countSpecialResources(characterBonuses.slots);
@@ -773,17 +771,17 @@ const ShipSelector = () => {
                         }
                         return null;
                       })()}
-                      
+
                       {/* Regular Upgrade Slots */}
                       {characterBonuses.slots.filter(slot => !upgradeService.isSpecialResource(slot)).map((slot, index) => {
                         const availableUpgrades = upgradeService.getUpgradesForSlotCode(slot);
                         const characterInitiative = characterBonuses ? characterBonuses.initiative : 1;
-                        
+
                         // Use the filtered index for the select value and onChange
                         const slotIndex = index;
-                        
+
                         return (
-                          <div key={index} style={{ 
+                          <div key={index} style={{
                             marginBottom: '15px',
                             padding: '8px',
                             background: '#e8f5e8',
@@ -802,10 +800,10 @@ const ShipSelector = () => {
                               >
                                 {slot}
                               </span>
-                              
+
                               <Select
-                                value={editingShipSelection?.selectedRankUpgrades[slotIndex] ? 
-                                  { value: editingShipSelection.selectedRankUpgrades[slotIndex], label: editingShipSelection.selectedRankUpgrades[slotIndex] } : 
+                                value={editingShipSelection?.selectedRankUpgrades[slotIndex] ?
+                                  { value: editingShipSelection.selectedRankUpgrades[slotIndex], label: editingShipSelection.selectedRankUpgrades[slotIndex] } :
                                   null
                                 }
                                 onChange={(selectedOption) => handleRankUpgradeSelection(slotIndex, selectedOption ? selectedOption.value : '')}
@@ -823,11 +821,11 @@ const ShipSelector = () => {
                                 ]}
                                 formatOptionLabel={({ label, upgrade, isInvalid }) => {
                                   if (!upgrade) return <span>{label}</span>;
-                                  
+
                                   // Simple X-Wing symbol replacement
                                   const renderRestrictions = (text) => {
                                     if (!text) return null;
-                                    
+
                                     // Handle [r:symbol] format
                                     if (text.includes('[r:')) {
                                       return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
@@ -847,7 +845,7 @@ const ShipSelector = () => {
                                         return part;
                                       });
                                     }
-                                    
+
                                     // Handle regular [symbol] format
                                     return text.split(/(\[[^\]]+\])/).map((part, index) => {
                                       if (part.startsWith('[') && part.endsWith(']')) {
@@ -860,7 +858,7 @@ const ShipSelector = () => {
                                       return part;
                                     });
                                   };
-                                  
+
                                   return (
                                     <div style={{
                                       color: isInvalid ? '#6c757d' : 'inherit',
@@ -872,9 +870,9 @@ const ShipSelector = () => {
                                       {upgrade.restrictions && (
                                         <span style={{ color: '#6c757d' }}> - {renderRestrictions(upgrade.restrictions)}</span>
                                       )}
-                                      {isInvalid && (
-                                        <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in}]</span>
-                                      )}
+                                      {isInvalid ?
+                                        <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in > 0 ? upgrade.minimum_in : 1}]</span>
+                                        : null}
                                     </div>
                                   );
                                 }}
@@ -898,7 +896,7 @@ const ShipSelector = () => {
                                 isClearable
                               />
                             </div>
-                            
+
                             {editingShipSelection?.selectedRankUpgrades[slotIndex] && (() => {
                               const selectedUpgrade = upgradeService.getUpgradeByName(editingShipSelection.selectedRankUpgrades[slotIndex]);
                               if (selectedUpgrade) {
@@ -912,7 +910,7 @@ const ShipSelector = () => {
                                     fontSize: '11px',
                                     color: isInvalid ? '#721c24' : '#155724',
                                     border: isInvalid ? '1px solid #f5c6cb' : 'none'
-                                  }}>                                    
+                                  }}>
                                     <div style={{ marginBottom: '5px' }}>
                                       <strong>Cost:</strong> {String(Number(selectedUpgrade.cpp_cost))} XP
                                     </div>
@@ -948,7 +946,7 @@ const ShipSelector = () => {
                                             }
                                             return part;
                                           });
-                                        })()} 
+                                        })()}
                                       </div>
                                     )}
                                     {selectedUpgrade.minimum_in && Number(selectedUpgrade.minimum_in) > 0 ? (
@@ -958,7 +956,7 @@ const ShipSelector = () => {
                                     ) : null}
                                     {isInvalid ? (
                                       <div style={{ fontWeight: 'bold', color: '#dc3545', marginBottom: '5px' }}>
-                                        INVALID: Requires Initiative {String(Number(selectedUpgrade.minimum_in || 0))}
+                                        INVALID: Requires Initiative {String(Number(selectedUpgrade.minimum_in || 1))}
                                       </div>
                                     ) : null}
                                     <br />
@@ -991,13 +989,13 @@ const ShipSelector = () => {
                   </p>
                   {/* Debug info */}
                   <div style={{ fontSize: '12px', color: '#dc3545', marginTop: '5px' }}>
-                    Debug: Character={currentCharacter ? currentCharacter.callsign : 'null'}, 
+                    Debug: Character={currentCharacter ? currentCharacter.callsign : 'null'},
                     Bonuses={characterBonuses ? 'loaded' : 'null'}
                   </div>
                 </div>
               )}
             </div>
-            
+
             <div>
               <h5 style={{ margin: '0 0 10px 0' }}>Ship Information:</h5>
               <div style={{
