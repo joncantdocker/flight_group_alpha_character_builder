@@ -192,13 +192,25 @@ const ShipSelector = () => {
       return;
     }
 
+    // If there were unsaved changes and user confirmed to discard them, 
+    // first restore the original state before proceeding
+    if (hasUnsavedChanges) {
+      discardChanges();
+    }
+
     if (shipKey) {
       const ship = shipService.getShipByKey(shipKey);
+      
+      // Preserve rank-based upgrades when switching ships
+      // Use currentShipSelection (not editingShipSelection) to get the saved state
+      const preservedRankUpgrades = currentShipSelection ? 
+        { ...currentShipSelection.selectedRankUpgrades } : {};
+      
       const newSelection = {
         shipKey,
         selectedShip: ship ? { key: shipKey, ...ship } : null,
         selectedUpgrades: {},
-        selectedRankUpgrades: {}
+        selectedRankUpgrades: preservedRankUpgrades
       };
       setEditingShipSelection(newSelection);
       setHasUnsavedChanges(false);

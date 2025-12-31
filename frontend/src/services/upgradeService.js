@@ -245,15 +245,15 @@ class UpgradeService {
 
   // Check if an upgrade is a "path upgrade" (taken from path XP)
   isPathUpgrade(upgrade) {
-    if (!upgrade || !upgrade.category) return false;
+    if (!upgrade || !upgrade.categoryKey) return false;
     const pathUpgradeCategories = [
-      'Elite Talent',
-      'Imperial Pilot Ability', 
-      'Rebel Pilot Ability',
-      'Force Talent',
-      'Command Talent'
+      'elite_talents',
+      'imperial_pilot_abilities', 
+      'Rebel Pilot Abilities',
+      'Force Talents',
+      'Command Talents'
     ];
-    return pathUpgradeCategories.includes(upgrade.category);
+    return pathUpgradeCategories.includes(upgrade.categoryKey);
   }
 
   // Calculate total cost split between path and loadout XP
