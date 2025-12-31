@@ -107,7 +107,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
         // Wait for path service to load if needed
         setTimeout(() => {
           const bonuses = pathUpgradesService.getCharacterBonuses(character);
-          console.log('Character bonuses:', bonuses); // Debug log
           setCharacterBonuses(bonuses);
         }, 200);
       } else {
@@ -1041,10 +1040,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                       <p style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
                         No rank-based upgrade slots yet
                       </p>
-                      {/* Debug info */}
-                      <div style={{ fontSize: '12px', color: '#dc3545', marginTop: '5px' }}>
-                        Debug: Character has {characterBonuses.slots ? characterBonuses.slots.length : 'no'} slots
-                      </div>
                     </div>
                   )}
                 </div>
@@ -1053,11 +1048,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                   <p style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
                     {!currentCharacter ? 'No character selected' : 'Loading character bonuses...'}
                   </p>
-                  {/* Debug info */}
-                  <div style={{ fontSize: '12px', color: '#dc3545', marginTop: '5px' }}>
-                    Debug: Character={currentCharacter ? currentCharacter.callsign : 'null'},
-                    Bonuses={characterBonuses ? 'loaded' : 'null'}
-                  </div>
                 </div>
               )}
             </div>
