@@ -12,39 +12,6 @@ class LocalDataService {
   initializeData() {
     // Migrate existing characters to include path field
     this.migrateCharacterData();
-    
-    if (!this.getCharacters().length) {
-      const sampleCharacters = [
-        {
-          id: 1,
-          callsign: "Ghost",
-          bankedXP: 15,
-          loadoutXP: 8,
-          pathXP: 12,
-          rank: 3,
-          path: "Ace", // Has chosen a path at rank 3
-          createdAt: new Date().toISOString(),
-          lastSaved: new Date().toISOString()
-        },
-        {
-          id: 2,
-          callsign: "Phoenix",
-          bankedXP: 25,
-          loadoutXP: 15,
-          pathXP: 20,
-          rank: 4,
-          path: "Force User", // Has chosen a path at rank 3+
-          createdAt: new Date().toISOString(),
-          lastSaved: new Date().toISOString()
-        }
-      ];
-      this.setCharacters(sampleCharacters);
-      
-      // Set first character as current if none selected
-      if (!this.getCurrentCharacterId()) {
-        this.setCurrentCharacter(sampleCharacters[0].id);
-      }
-    }
   }
 
   migrateCharacterData() {

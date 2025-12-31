@@ -14,7 +14,8 @@ const Header = ({ apiStatus }) => {
     <header className="header">
       <div className="container">
         <h1>
-          ⚔️ Character Builder
+          <span style={{ fontFamily: 'X-Wing-Ships, Arial, sans-serif', marginRight: '10px' }}>F</span>
+          Flight Group Alpha Character Builder
           <span className={`status-indicator ${getStatusClass()}`} title={`Storage Status: ${apiStatus}`}></span>
         </h1>
         <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.9 }}>

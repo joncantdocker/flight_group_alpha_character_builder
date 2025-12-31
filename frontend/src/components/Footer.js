@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="container">
-        <p>&copy; 2025 Character Builder. Built with React and localStorage for local data management.</p>
+        <p>Tool is provided as is, if there are any bugs let me know :)</p>
       </div>
     </footer>
   );
