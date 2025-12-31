@@ -35,3 +35,4 @@ jobs:
       with:
         folder: frontend/build
         clean: true
+        token: ${{ secrets.GITHUB_TOKEN }}
