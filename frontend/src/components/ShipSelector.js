@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 import shipService from '../services/shipService';
 import upgradeService from '../services/upgradeService';
 import pathUpgradesService from '../services/pathUpgradesService';
 import apiService from '../services/apiService';
+
+// Add CSS for X-Wing fonts in dropdowns
+const xwingFontStyle = {
+  fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
+  fontWeight: 'normal',
+  fontStyle: 'normal'
+};
+
+const xwingRedFontStyle = {
+  fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
+  color: '#dc3545',
+  fontWeight: 'normal',
+  fontStyle: 'normal'
+};
 
 // Utility function to parse X-Wing special formatting codes
 const parseXWingText = (text) => {
@@ -295,36 +310,98 @@ const ShipSelector = () => {
                   {slot}
                 </span>
                 
-                <select
-                  value={editingShipSelection?.selectedUpgrades[index] || ''}
-                  onChange={(e) => handleUpgradeSelection(index, e.target.value)}
-                  style={{
-                    padding: '6px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
-                    flex: 1,
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="">-- No Upgrade --</option>
-                  {availableUpgrades.map((upgrade, upgradeIndex) => {
-                    const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
+                <Select
+                  value={editingShipSelection?.selectedUpgrades[index] ? 
+                    { value: editingShipSelection.selectedUpgrades[index], label: editingShipSelection.selectedUpgrades[index] } : 
+                    null
+                  }
+                  onChange={(selectedOption) => handleUpgradeSelection(index, selectedOption ? selectedOption.value : '')}
+                  options={[
+                    { value: '', label: '-- No Upgrade --' },
+                    ...availableUpgrades.map((upgrade) => {
+                      const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
+                      return {
+                        value: upgrade.name,
+                        label: upgrade.name,
+                        upgrade: upgrade,
+                        isInvalid: isInvalid
+                      };
+                    })
+                  ]}
+                  formatOptionLabel={({ label, upgrade, isInvalid }) => {
+                    if (!upgrade) return <span>{label}</span>;
+                    
+                    // Simple X-Wing symbol replacement
+                    const renderRestrictions = (text) => {
+                      if (!text) return null;
+                      
+                      // Handle [r:symbol] format
+                      if (text.includes('[r:')) {
+                        return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
+                          if (part.startsWith('r:')) {
+                            return (
+                              <span key={index} style={xwingRedFontStyle}>
+                                {part.substring(2)}
+                              </span>
+                            );
+                          } else if (part.match(/\[[^\]]+\]/)) {
+                            return (
+                              <span key={index} style={xwingFontStyle}>
+                                {part.replace(/[\[\]]/g, '')}
+                              </span>
+                            );
+                          }
+                          return part;
+                        });
+                      }
+                      
+                      // Handle regular [symbol] format
+                      return text.split(/(\[[^\]]+\])/).map((part, index) => {
+                        if (part.startsWith('[') && part.endsWith(']')) {
+                          return (
+                            <span key={index} style={xwingFontStyle}>
+                              {part.substring(1, part.length - 1)}
+                            </span>
+                          );
+                        }
+                        return part;
+                      });
+                    };
+                    
                     return (
-                      <option 
-                        key={upgradeIndex} 
-                        value={upgrade.name}
-                        style={{
-                          color: isInvalid ? '#6c757d' : 'inherit',
-                          fontStyle: isInvalid ? 'italic' : 'normal'
-                        }}
-                      >
-                        {upgrade.name} ({Number(upgrade.cpp_cost)} XP)
-                        {upgrade.restrictions ? ` - ${upgrade.restrictions}` : ''}
-                        {isInvalid ? ' [Requires Init ' + upgrade.minimum_in + ']' : ''}
-                      </option>
+                      <div style={{
+                        color: isInvalid ? '#6c757d' : 'inherit',
+                        fontStyle: isInvalid ? 'italic' : 'normal',
+                        fontFamily: 'Arial, sans-serif'
+                      }}>
+                        <span>{upgrade.name}</span>
+                        <span style={{ color: '#6c757d' }}> ({Number(upgrade.cpp_cost)} XP)</span>
+                        {upgrade.restrictions && (
+                          <span style={{ color: '#6c757d' }}> - {renderRestrictions(upgrade.restrictions)}</span>
+                        )}
+                        {isInvalid && (
+                          <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in}]</span>
+                        )}
+                      </div>
                     );
-                  })}
-                </select>
+                  }}
+                  styles={{
+                    container: (provided) => ({
+                      ...provided,
+                      flex: 1
+                    }),
+                    control: (provided) => ({
+                      ...provided,
+                      minHeight: 'auto',
+                      fontSize: '14px'
+                    }),
+                    option: (provided) => ({
+                      ...provided,
+                      fontFamily: 'Arial, sans-serif'
+                    })
+                  }}
+                  isClearable
+                />
               </div>
               
               {editingShipSelection?.selectedUpgrades[index] && (() => {
@@ -344,6 +421,41 @@ const ShipSelector = () => {
                       <div style={{ marginBottom: '5px' }}>
                         <strong>Cost:</strong> {String(Number(selectedUpgrade.cpp_cost))} XP
                       </div>
+                      {selectedUpgrade.restrictions && (
+                        <div style={{ marginBottom: '5px' }}>
+                          <strong>Requirements:</strong> {(() => {
+                            const text = selectedUpgrade.restrictions;
+                            if (text.includes('[r:')) {
+                              return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
+                                if (part.startsWith('r:')) {
+                                  return (
+                                    <span key={index} style={xwingRedFontStyle}>
+                                      {part.substring(2)}
+                                    </span>
+                                  );
+                                } else if (part.match(/\[[^\]]+\]/)) {
+                                  return (
+                                    <span key={index} style={xwingFontStyle}>
+                                      {part.replace(/[\[\]]/g, '')}
+                                    </span>
+                                  );
+                                }
+                                return part;
+                              });
+                            }
+                            return text.split(/(\[[^\]]+\])/).map((part, index) => {
+                              if (part.startsWith('[') && part.endsWith(']')) {
+                                return (
+                                  <span key={index} style={xwingFontStyle}>
+                                    {part.substring(1, part.length - 1)}
+                                  </span>
+                                );
+                              }
+                              return part;
+                            });
+                          })()} 
+                        </div>
+                      )}
                       {selectedUpgrade.minimum_in && Number(selectedUpgrade.minimum_in) > 0 ? (
                         <div style={{ marginBottom: '5px' }}>
                           <strong>Min Initiative:</strong> {String(Number(selectedUpgrade.minimum_in))}
@@ -596,7 +708,7 @@ const ShipSelector = () => {
                                       fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
                                       marginRight: '4px'
                                     }}>g</span>
-                                    {resources.charges} Charge{resources.charges > 1 ? 's' : ''}
+                                    + {resources.charges} Charge{resources.charges > 1 ? 's' : ''}
                                   </div>
                                 )}
                                 {resources.force > 0 && (
@@ -614,7 +726,7 @@ const ShipSelector = () => {
                                       fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
                                       marginRight: '4px'
                                     }}>h`</span>
-                                    {resources.force} Force
+                                    + {resources.force} Force
                                   </div>
                                 )}
                               </div>
@@ -653,37 +765,100 @@ const ShipSelector = () => {
                                 {slot}
                               </span>
                               
-                              <select
-                                value={editingShipSelection?.selectedRankUpgrades[slotIndex] || ''}
-                                onChange={(e) => handleRankUpgradeSelection(slotIndex, e.target.value)}
-                                style={{
-                                  padding: '4px',
-                                  borderRadius: '4px',
-                                  border: '1px solid #28a745',
-                                  flex: 1,
-                                  fontSize: '12px',
-                                  background: 'white'
-                                }}
-                              >
-                                <option value="">-- No Upgrade --</option>
-                                {availableUpgrades.map((upgrade, upgradeIndex) => {
-                                  const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
+                              <Select
+                                value={editingShipSelection?.selectedRankUpgrades[slotIndex] ? 
+                                  { value: editingShipSelection.selectedRankUpgrades[slotIndex], label: editingShipSelection.selectedRankUpgrades[slotIndex] } : 
+                                  null
+                                }
+                                onChange={(selectedOption) => handleRankUpgradeSelection(slotIndex, selectedOption ? selectedOption.value : '')}
+                                options={[
+                                  { value: '', label: '-- No Upgrade --' },
+                                  ...availableUpgrades.map((upgrade) => {
+                                    const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
+                                    return {
+                                      value: upgrade.name,
+                                      label: upgrade.name,
+                                      upgrade: upgrade,
+                                      isInvalid: isInvalid
+                                    };
+                                  })
+                                ]}
+                                formatOptionLabel={({ label, upgrade, isInvalid }) => {
+                                  if (!upgrade) return <span>{label}</span>;
+                                  
+                                  // Simple X-Wing symbol replacement
+                                  const renderRestrictions = (text) => {
+                                    if (!text) return null;
+                                    
+                                    // Handle [r:symbol] format
+                                    if (text.includes('[r:')) {
+                                      return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
+                                        if (part.startsWith('r:')) {
+                                          return (
+                                            <span key={index} style={xwingRedFontStyle}>
+                                              {part.substring(2)}
+                                            </span>
+                                          );
+                                        } else if (part.match(/\[[^\]]+\]/)) {
+                                          return (
+                                            <span key={index} style={xwingFontStyle}>
+                                              {part.replace(/[\[\]]/g, '')}
+                                            </span>
+                                          );
+                                        }
+                                        return part;
+                                      });
+                                    }
+                                    
+                                    // Handle regular [symbol] format
+                                    return text.split(/(\[[^\]]+\])/).map((part, index) => {
+                                      if (part.startsWith('[') && part.endsWith(']')) {
+                                        return (
+                                          <span key={index} style={xwingFontStyle}>
+                                            {part.substring(1, part.length - 1)}
+                                          </span>
+                                        );
+                                      }
+                                      return part;
+                                    });
+                                  };
+                                  
                                   return (
-                                    <option 
-                                      key={upgradeIndex} 
-                                      value={upgrade.name}
-                                      style={{
-                                        color: isInvalid ? '#6c757d' : 'inherit',
-                                        fontStyle: isInvalid ? 'italic' : 'normal'
-                                      }}
-                                    >
-                                      {upgrade.name} ({Number(upgrade.cpp_cost)} XP)
-                                      {upgrade.restrictions ? ` - ${upgrade.restrictions}` : ''}
-                                      {isInvalid ? ' [Requires Init ' + upgrade.minimum_in + ']' : ''}
-                                    </option>
+                                    <div style={{
+                                      color: isInvalid ? '#6c757d' : 'inherit',
+                                      fontStyle: isInvalid ? 'italic' : 'normal',
+                                      fontFamily: 'Arial, sans-serif'
+                                    }}>
+                                      <span>{upgrade.name}</span>
+                                      <span style={{ color: '#6c757d' }}> ({Number(upgrade.cpp_cost)} XP)</span>
+                                      {upgrade.restrictions && (
+                                        <span style={{ color: '#6c757d' }}> - {renderRestrictions(upgrade.restrictions)}</span>
+                                      )}
+                                      {isInvalid && (
+                                        <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in}]</span>
+                                      )}
+                                    </div>
                                   );
-                                })}
-                              </select>
+                                }}
+                                styles={{
+                                  container: (provided) => ({
+                                    ...provided,
+                                    flex: 1
+                                  }),
+                                  control: (provided) => ({
+                                    ...provided,
+                                    minHeight: 'auto',
+                                    fontSize: '12px',
+                                    background: 'white',
+                                    borderColor: '#28a745'
+                                  }),
+                                  option: (provided) => ({
+                                    ...provided,
+                                    fontFamily: 'Arial, sans-serif'
+                                  })
+                                }}
+                                isClearable
+                              />
                             </div>
                             
                             {editingShipSelection?.selectedRankUpgrades[slotIndex] && (() => {
@@ -703,6 +878,41 @@ const ShipSelector = () => {
                                     <div style={{ marginBottom: '5px' }}>
                                       <strong>Cost:</strong> {String(Number(selectedUpgrade.cpp_cost))} XP
                                     </div>
+                                    {selectedUpgrade.restrictions && (
+                                      <div style={{ marginBottom: '5px' }}>
+                                        <strong>Requirements:</strong> {(() => {
+                                          const text = selectedUpgrade.restrictions;
+                                          if (text.includes('[r:')) {
+                                            return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
+                                              if (part.startsWith('r:')) {
+                                                return (
+                                                  <span key={index} style={xwingRedFontStyle}>
+                                                    {part.substring(2)}
+                                                  </span>
+                                                );
+                                              } else if (part.match(/\[[^\]]+\]/)) {
+                                                return (
+                                                  <span key={index} style={xwingFontStyle}>
+                                                    {part.replace(/[\[\]]/g, '')}
+                                                  </span>
+                                                );
+                                              }
+                                              return part;
+                                            });
+                                          }
+                                          return text.split(/(\[[^\]]+\])/).map((part, index) => {
+                                            if (part.startsWith('[') && part.endsWith(']')) {
+                                              return (
+                                                <span key={index} style={xwingFontStyle}>
+                                                  {part.substring(1, part.length - 1)}
+                                                </span>
+                                              );
+                                            }
+                                            return part;
+                                          });
+                                        })()} 
+                                      </div>
+                                    )}
                                     {selectedUpgrade.minimum_in && Number(selectedUpgrade.minimum_in) > 0 ? (
                                       <div style={{ marginBottom: '5px' }}>
                                         <strong>Min Initiative:</strong> {String(Number(selectedUpgrade.minimum_in))}
