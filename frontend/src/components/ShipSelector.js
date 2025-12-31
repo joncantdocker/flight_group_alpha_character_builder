@@ -444,7 +444,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                           } else if (part.match(/[[][^\]]+]/)) {
                             return (
                               <span key={index} style={xwingFontStyle}>
-                                {part.replace(/[\[\]]/g, '')}
+                                {part.replace(/[[]]/g, '')}
                               </span>
                             );
                           }
@@ -532,7 +532,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                 } else if (part.match(/[[][^\]]+]/)) {
                                   return (
                                     <span key={index} style={xwingFontStyle}>
-                                      {part.replace(/[\[\]]/g, '')}
+                                      {part.replace(/[[]]/g, '')}
                                     </span>
                                   );
                                 }
@@ -898,7 +898,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                         } else if (part.match(/[[][^\]]+]/)) {
                                           return (
                                             <span key={index} style={xwingFontStyle}>
-                                              {part.replace(/[\[\]]/g, '')}
+                                              {part.replace(/[[]]/g, '')}
                                             </span>
                                           );
                                         }
@@ -989,7 +989,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                               } else if (part.match(/[[][^\]]+]/)) {
                                                 return (
                                                   <span key={index} style={xwingFontStyle}>
-                                                    {part.replace(/[\[\]]/g, '')}
+                                                    {part.replace(/[[]]/g, '')}
                                                   </span>
                                                 );
                                               }
