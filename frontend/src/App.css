@@ -1,0 +1,98 @@
+@font-face {
+  font-family: 'X-Wing-Symbols';
+  src: url('./x-wing-symbols.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'X-Wing-Ships';
+  src: url('./x-wing-ships.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.x-wing-symbol {
+  font-family: 'X-Wing-Symbols', Arial, sans-serif !important;
+}
+
+.x-wing-symbol-red {
+  font-family: 'X-Wing-Symbols', Arial, sans-serif !important;
+  color: #dc3545 !important;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 10px;
+}
+
+.status-connected {
+  background-color: #28a745;
+}
+
+.status-disconnected {
+  background-color: #dc3545;
+}
+
+.status-checking {
+  background-color: #ffc107;
+}
+
+.status-error {
+  background-color: #fd7e14;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-menu a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.nav-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}

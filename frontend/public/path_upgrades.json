@@ -1,0 +1,242 @@
+{
+    "None": {
+        "1": {
+            "slots": [],
+            "actions": [],
+            "initiative": 1
+        },
+        "2": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 2
+        }
+    },
+    "Ace": {
+        "1": {
+            "slots": [],
+            "actions": [],
+            "initiative": 1
+        },
+        "2": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 2
+        },
+        "3": {
+            "slots": ["y/E"],
+            "actions": [],
+            "initiative": 3
+        },
+        "4": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 4
+        },
+        "5": {
+            "slots": ["g", "y/E"],
+            "actions": [],
+            "initiative": 5
+        },
+        "6": {
+            "slots": ["m/S"],
+            "actions": [],
+            "initiative": 6
+        },
+        "7": {
+            "slots": ["y/x"],
+            "actions": [],
+            "initiative": 6
+        },
+        "8": {
+            "slots": ["I/X"],
+            "actions": [],
+            "initiative": 6
+        },
+        "9": {
+            "slots": ["g"],
+            "actions": [],
+            "initiative": 6
+        },
+        "10": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 6
+        },
+        "11": {
+            "slots": ["X"],
+            "actions": [],
+            "initiative": 6
+        }
+    },
+    "Force User": {
+        "1": {
+            "slots": [],
+            "actions": [],
+            "initiative": 1
+        },
+        "2": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 2
+        },
+        "3": {
+            "slots": ["h`"],
+            "actions": [],
+            "initiative": 3
+        },
+        "4": {
+            "slots": ["m", "F"],
+            "actions": [],
+            "initiative": 3
+        },
+        "5": {
+            "slots": ["g", "h`"],
+            "actions": [],
+            "initiative": 4
+        },
+        "6": {
+            "slots": ["m/S", "F"],
+            "actions": [],
+            "initiative": 5
+        },
+        "7": {
+            "slots": ["h`"],
+            "actions": [],
+            "initiative": 6
+        },
+        "8": {
+            "slots": ["F/y"],
+            "actions": [],
+            "initiative": 6
+        },
+        "9": {
+            "slots": ["g"],
+            "actions": [],
+            "initiative": 6
+        },
+        "10": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 6
+        },
+        "11": {
+            "slots": ["X"],
+            "actions": [],
+            "initiative": 6
+        }
+    },
+    "Coordinate": {
+        "1": {
+            "slots": [],
+            "actions": [],
+            "initiative": 1
+        },
+        "2": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 2
+        },
+        "3": {
+            "slots": ["V"],
+            "actions": ["o"],
+            "initiative": 3
+        },
+        "4": {
+            "slots": ["m"],
+            "actions": [">o"],
+            "initiative": 4
+        },
+        "5": {
+            "slots": ["g", "V"],
+            "actions": [],
+            "initiative": 5
+        },
+        "6": {
+            "slots": ["m/S"],
+            "actions": [],
+            "initiative": 6
+        },
+        "7": {
+            "slots": ["V"],
+            "actions": [">o"],
+            "initiative": 6
+        },
+        "8": {
+            "slots": ["I/X"],
+            "actions": [],
+            "initiative": 6
+        },
+        "9": {
+            "slots": ["g"],
+            "actions": [],
+            "initiative": 6
+        },
+        "10": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 6
+        },
+        "11": {
+            "slots": ["X"],
+            "actions": [],
+            "initiative": 6
+        }
+    },
+    "Tech": {
+        "1": {
+            "slots": [],
+            "actions": [],
+            "initiative": 1
+        },
+        "2": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 2
+        },
+        "3": {
+            "slots": ["E"],
+            "actions": ["a"],
+            "initiative": 3
+        },
+        "4": {
+            "slots": ["m", "X"],
+            "actions": [">a"],
+            "initiative": 3
+        },
+        "5": {
+            "slots": ["g", "g", "Y"],
+            "actions": [],
+            "initiative": 4
+        },
+        "6": {
+            "slots": ["m/S", "y/E"],
+            "actions": [],
+            "initiative": 5
+        },
+        "7": {
+            "slots": [],
+            "actions": [">a"],
+            "initiative": 6
+        },
+        "8": {
+            "slots": ["I", "y"],
+            "actions": [],
+            "initiative": 6
+        },
+        "9": {
+            "slots": ["g"],
+            "actions": [],
+            "initiative": 6
+        },
+        "10": {
+            "slots": ["m"],
+            "actions": [],
+            "initiative": 6
+        },
+        "11": {
+            "slots": ["X"],
+            "actions": [],
+            "initiative": 6
+        }
+    }
+}

@@ -1,0 +1,20 @@
+# Alternative development docker-compose file
+version: '3.8'
+
+services:
+  # Character Builder Frontend (Development)
+  character-builder:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - FAST_REFRESH=false
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true

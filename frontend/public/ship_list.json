@@ -1,0 +1,67 @@
+{
+    "F": {
+        "name": "TIE/Ln Fighter",
+        "upgrades": ["m"],
+        "hyperdrive": false
+    },
+    "I": {
+        "name": "TIE Interceptor",
+        "upgrades": ["mn"],
+        "hyperdrive": false
+    },
+    "&": {
+        "name": "Assault Gunboat",
+        "upgrades": ["SPMn"],
+        "hyperdrive": true
+    },
+    "P": {
+        "name": "TIE Phantom",
+        "upgrades": ["YS"],
+        "hyperdrive": true
+    },
+    "B": {
+        "name": "TIE Bomber",
+        "upgrades": ["PMMYBB"],
+        "hyperdrive": false
+    },
+    "A": {
+        "name": "TIE Advanced x1",
+        "upgrades": ["SM"],
+        "hyperdrive": true
+    },
+    "R": {
+        "name": "TIE Advanced v1",
+        "upgrades": ["SM"],
+        "hyperdrive": true
+    },
+    "D": {
+        "name": "TIE Defender",
+        "upgrades": ["SCMn"],
+        "hyperdrive": true
+    },
+    "`": {
+        "name": "TIE Aggressor",
+        "upgrades": ["PMM"],
+        "hyperdrive": false
+    },
+    "N": {
+        "name": "TIE/ca Punisher",
+        "upgrades": ["SPMMYBB"],
+        "hyperdrive": false
+    },
+    "V": {
+        "name": "TIE Reaper",
+        "upgrades": ["WW"],
+        "hyperdrive": true
+    },
+    "T": {
+        "name": "TIE/sk Striker",
+        "upgrades": ["YB"],
+        "hyperdrive": false
+    },
+    "J": {
+        "name": "TIE/rb Heavy",
+        "upgrades": ["CCmn"],
+        "hyperdrive": false
+    }
+}
