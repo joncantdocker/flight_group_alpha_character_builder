@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Select from 'react-select';
 import shipService from '../services/shipService';
 import upgradeService from '../services/upgradeService';
@@ -77,7 +77,7 @@ const parseXWingText = (text) => {
   return parts.length > 1 ? parts : text;
 };
 
-const ShipSelector = ({ editingCharacter = null }) => {
+const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) => {
   const [ships, setShips] = useState([]);
   const [currentShipSelection, setCurrentShipSelection] = useState(null);
   const [editingShipSelection, setEditingShipSelection] = useState(null); // Temp state for unsaved changes
@@ -133,6 +133,49 @@ const ShipSelector = ({ editingCharacter = null }) => {
       setCharacterBonuses(null);
     }
   }, [editingCharacter]);
+
+  // Save current ship selection
+  const saveShipSelection = useCallback(async () => {
+    if (!editingShipSelection || !hasUnsavedChanges) return;
+
+    try {
+      apiService.setCurrentShipSelection(
+        editingShipSelection.shipKey,
+        editingShipSelection.selectedUpgrades,
+        editingShipSelection.selectedRankUpgrades
+      );
+
+      setCurrentShipSelection({ ...editingShipSelection });
+      setHasUnsavedChanges(false);
+    } catch (err) {
+      console.error('Error saving ship selection:', err);
+    }
+  }, [editingShipSelection, hasUnsavedChanges]);
+
+  // Force save current ship selection (for Save All functionality)
+  const forceSaveShipSelection = useCallback(async () => {
+    if (!editingShipSelection) return;
+
+    try {
+      apiService.setCurrentShipSelection(
+        editingShipSelection.shipKey,
+        editingShipSelection.selectedUpgrades,
+        editingShipSelection.selectedRankUpgrades
+      );
+
+      setCurrentShipSelection({ ...editingShipSelection });
+      setHasUnsavedChanges(false);
+    } catch (err) {
+      console.error('Error force saving ship selection:', err);
+    }
+  }, [editingShipSelection]);
+
+  // Expose saveShipSelection function to parent component
+  useEffect(() => {
+    if (onSaveShipSelection) {
+      onSaveShipSelection(forceSaveShipSelection);
+    }
+  }, [onSaveShipSelection, forceSaveShipSelection]);
 
   // Handle page refresh/close warnings
   useEffect(() => {
@@ -307,24 +350,6 @@ const ShipSelector = ({ editingCharacter = null }) => {
     const shipUpgradeCosts = upgradeService.calculateSplitCosts(editingShipSelection.selectedUpgrades);
     const rankUpgradeCosts = upgradeService.calculateSplitCosts(editingShipSelection.selectedRankUpgrades);
     return shipUpgradeCosts.pathCost + rankUpgradeCosts.pathCost;
-  };
-
-  // Save current ship selection
-  const saveShipSelection = async () => {
-    if (!editingShipSelection || !hasUnsavedChanges) return;
-
-    try {
-      apiService.setCurrentShipSelection(
-        editingShipSelection.shipKey,
-        editingShipSelection.selectedUpgrades,
-        editingShipSelection.selectedRankUpgrades
-      );
-
-      setCurrentShipSelection({ ...editingShipSelection });
-      setHasUnsavedChanges(false);
-    } catch (err) {
-      console.error('Error saving ship selection:', err);
-    }
   };
 
   const discardChanges = () => {

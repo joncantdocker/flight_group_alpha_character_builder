@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import apiService from '../services/apiService';
 import pathUpgradesService from '../services/pathUpgradesService';
 import XWingSymbols from './XWingSymbols';
@@ -30,6 +30,9 @@ const CharacterBuilder = () => {
   const [showPathSelection, setShowPathSelection] = useState(false);
   const [selectedPath, setSelectedPath] = useState('');
   const [availablePaths, setAvailablePaths] = useState([]);
+
+  // Ship selection save function reference
+  const saveShipSelectionRef = useRef(null);
 
   // Snackbar helper functions
   const showSnackbar = (message, type = 'error') => {
@@ -350,6 +353,11 @@ const CharacterBuilder = () => {
         await apiService.updateCharacter(editingCharacter.id, editingCharacter);
         setCurrentCharacter(editingCharacter);
         setHasUnsavedChanges(false);
+      }
+      
+      // Save ship selection if available
+      if (saveShipSelectionRef.current && typeof saveShipSelectionRef.current === 'function') {
+        await saveShipSelectionRef.current();
       }
       
       const result = await apiService.saveAll();
@@ -896,7 +904,10 @@ const CharacterBuilder = () => {
       )}
 
       {/* Ship Selection Section */}
-      <ShipSelector editingCharacter={editingCharacter} />
+      <ShipSelector 
+        editingCharacter={editingCharacter} 
+        onSaveShipSelection={(func) => { saveShipSelectionRef.current = func; }}
+      />
       
       {/* Path Selection Modal */}
       {showPathSelection && (
