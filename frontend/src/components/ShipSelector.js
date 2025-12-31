@@ -134,7 +134,10 @@ const ShipSelector = () => {
     };
   }, [hasUnsavedChanges]);
 
-  const loadSavedShipSelection = () => {
+  const loadSavedShipSelection = async () => {
+    // Wait for ships to be loaded
+    await shipService.waitForLoad();
+    
     const savedSelection = apiService.getCurrentShipSelection();
     if (savedSelection) {
       const ship = savedSelection.shipKey ? shipService.getShipByKey(savedSelection.shipKey) : null;
@@ -156,25 +159,35 @@ const ShipSelector = () => {
 
   // Add another useEffect to listen for character changes more efficiently
   useEffect(() => {
-    const handleStorageChange = () => {
+    const handleCharacterChange = async () => {
       const character = apiService.getCurrentCharacter();
       setCurrentCharacter(character);
 
       if (character) {
-        setTimeout(() => {
+        setTimeout(async () => {
           const bonuses = pathUpgradesService.getCharacterBonuses(character);
           setCharacterBonuses(bonuses);
         }, 200);
+        
+        // Load ship selection for the new character
+        await loadSavedShipSelection();
       } else {
         setCharacterBonuses(null);
+        // Clear ship selection when no character is selected
+        setCurrentShipSelection(null);
+        setEditingShipSelection(null);
+        setHasUnsavedChanges(false);
       }
     };
 
-    // Listen for localStorage changes
-    window.addEventListener('storage', handleStorageChange);
+    // Listen for custom character change events
+    window.addEventListener('characterChanged', handleCharacterChange);
+    // Also listen for storage events for cross-tab synchronization
+    window.addEventListener('storage', handleCharacterChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('characterChanged', handleCharacterChange);
+      window.removeEventListener('storage', handleCharacterChange);
     };
   }, []);
 

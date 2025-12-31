@@ -136,6 +136,10 @@ class LocalDataService {
 
   setCurrentCharacter(id) {
     localStorage.setItem(this.currentCharacterKey, id.toString());
+    // Dispatch custom event to notify components of character change
+    window.dispatchEvent(new CustomEvent('characterChanged', { 
+      detail: { characterId: id } 
+    }));
   }
 
   getCurrentCharacter() {
@@ -210,23 +214,35 @@ class LocalDataService {
 
   // Ship selection persistence
   getCurrentShipSelection() {
-    const selection = localStorage.getItem(this.shipSelectionKey);
+    const currentCharacterId = this.getCurrentCharacterId();
+    if (!currentCharacterId) return null;
+    
+    const shipSelectionKey = `${this.shipSelectionKey}_${currentCharacterId}`;
+    const selection = localStorage.getItem(shipSelectionKey);
     return selection ? JSON.parse(selection) : null;
   }
 
   setCurrentShipSelection(shipKey, selectedUpgrades = {}, selectedRankUpgrades = {}) {
+    const currentCharacterId = this.getCurrentCharacterId();
+    if (!currentCharacterId) return null;
+    
     const selectionData = {
       shipKey,
       selectedUpgrades,
       selectedRankUpgrades,
       timestamp: new Date().toISOString()
     };
-    localStorage.setItem(this.shipSelectionKey, JSON.stringify(selectionData));
+    const shipSelectionKey = `${this.shipSelectionKey}_${currentCharacterId}`;
+    localStorage.setItem(shipSelectionKey, JSON.stringify(selectionData));
     return selectionData;
   }
 
   clearShipSelection() {
-    localStorage.removeItem(this.shipSelectionKey);
+    const currentCharacterId = this.getCurrentCharacterId();
+    if (!currentCharacterId) return false;
+    
+    const shipSelectionKey = `${this.shipSelectionKey}_${currentCharacterId}`;
+    localStorage.removeItem(shipSelectionKey);
     return true;
   }
 }
