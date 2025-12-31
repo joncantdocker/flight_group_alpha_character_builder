@@ -34,6 +34,18 @@ const CharacterBuilder = () => {
   // Ship selection save function reference
   const saveShipSelectionRef = useRef(null);
 
+  // XP Log persistence functions
+  const loadXpLog = (characterId) => {
+    if (!characterId) return [];
+    const saved = localStorage.getItem(`xp_log_${characterId}`);
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  const saveXpLog = (characterId, log) => {
+    if (!characterId) return;
+    localStorage.setItem(`xp_log_${characterId}`, JSON.stringify(log));
+  };
+
   // Snackbar helper functions
   const showSnackbar = (message, type = 'error') => {
     setSnackbar({ message, type, show: true });
@@ -85,11 +97,10 @@ const CharacterBuilder = () => {
       setEditingCharacter(character ? { ...character } : null);
       setHasUnsavedChanges(false);
       
-      // Reset transfer amounts and clear log when switching characters
+      // Reset transfer amounts when switching characters
       setAddBankedAmount(0);
       setToLoadoutAmount(0);
       setToPathAmount(0);
-      setXpLog([]);
       
       setMessage(`Switched to ${character.callsign}`);
       setTimeout(() => setMessage(''), 3000);
@@ -145,6 +156,8 @@ const CharacterBuilder = () => {
   };
 
   const addXpToLog = (type, amount, description) => {
+    if (!currentCharacter) return;
+    
     const logEntry = {
       id: Date.now(),
       timestamp: new Date().toLocaleString(),
@@ -152,7 +165,9 @@ const CharacterBuilder = () => {
       amount,
       description
     };
-    setXpLog(prev => [logEntry, ...prev].slice(0, 10)); // Keep last 10 entries
+    const newLog = [logEntry, ...xpLog].slice(0, 10); // Keep last 10 entries
+    setXpLog(newLog);
+    saveXpLog(currentCharacter.id, newLog);
   };
 
   const addBankedXP = () => {
@@ -373,6 +388,16 @@ const CharacterBuilder = () => {
   useEffect(() => {
     fetchCharacters();
   }, []);
+
+  // Load XP log when current character changes
+  useEffect(() => {
+    if (currentCharacter) {
+      const log = loadXpLog(currentCharacter.id);
+      setXpLog(log);
+    } else {
+      setXpLog([]);
+    }
+  }, [currentCharacter]);
 
   // Handle page refresh/close warnings
   useEffect(() => {
