@@ -214,4 +214,5 @@ class LocalDataService {
   }
 }
 
-export default new LocalDataService();
+const localDataServiceInstance = new LocalDataService();
+export default localDataServiceInstance;

@@ -100,7 +100,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
       // Load current character for rank-based upgrades
       // Use editingCharacter prop if available, otherwise get saved character
       const character = editingCharacter || apiService.getCurrentCharacter();
-      console.log('Loading character in ShipSelector:', character); // Debug log
       setCurrentCharacter(character);
 
       if (character) {
@@ -116,9 +115,10 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
 
     loadShips();
     loadCurrentCharacter();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reload character bonuses when editingCharacter prop changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const character = editingCharacter || apiService.getCurrentCharacter();
     setCurrentCharacter(character);
@@ -131,7 +131,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
     } else {
       setCharacterBonuses(null);
     }
-  }, [editingCharacter]);
+  }, [editingCharacter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save current ship selection
   const saveShipSelection = useCallback(async () => {
@@ -247,7 +247,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
       window.removeEventListener('characterChanged', handleCharacterChange);
       window.removeEventListener('storage', handleCharacterChange);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkUnsavedChanges = () => {
     if (hasUnsavedChanges) {
@@ -361,11 +361,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
     }
   };
 
-  // Get filtered slot index for non-special resources
-  const getNonSpecialSlotIndex = (originalSlots, currentSlot) => {
-    return originalSlots.filter(slot => !upgradeService.isSpecialResource(slot)).indexOf(currentSlot);
-  };
-
   const renderUpgradeSlots = (upgradeString) => {
     const slots = shipService.formatUpgradeSlots(upgradeString);
 
@@ -446,7 +441,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                 {part.substring(2)}
                               </span>
                             );
-                          } else if (part.match(/\[[^\]]+\]/)) {
+                          } else if (part.match(/[[][^\]]+]/)) {
                             return (
                               <span key={index} style={xwingFontStyle}>
                                 {part.replace(/[\[\]]/g, '')}
@@ -534,7 +529,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                       {part.substring(2)}
                                     </span>
                                   );
-                                } else if (part.match(/\[[^\]]+\]/)) {
+                                } else if (part.match(/[[][^\]]+]/)) {
                                   return (
                                     <span key={index} style={xwingFontStyle}>
                                       {part.replace(/[\[\]]/g, '')}
@@ -900,7 +895,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                               {part.substring(2)}
                                             </span>
                                           );
-                                        } else if (part.match(/\[[^\]]+\]/)) {
+                                        } else if (part.match(/[[][^\]]+]/)) {
                                           return (
                                             <span key={index} style={xwingFontStyle}>
                                               {part.replace(/[\[\]]/g, '')}
@@ -991,7 +986,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                                     {part.substring(2)}
                                                   </span>
                                                 );
-                                              } else if (part.match(/\[[^\]]+\]/)) {
+                                              } else if (part.match(/[[][^\]]+]/)) {
                                                 return (
                                                   <span key={index} style={xwingFontStyle}>
                                                     {part.replace(/[\[\]]/g, '')}
@@ -1001,7 +996,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                               return part;
                                             });
                                           }
-                                          return text.split(/(\[[^\]]+\])/).map((part, index) => {
+                                          return text.split(/([[][^\]]+])/).map((part, index) => {
                                             if (part.startsWith('[') && part.endsWith(']')) {
                                               return (
                                                 <span key={index} style={xwingFontStyle}>

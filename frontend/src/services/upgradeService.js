@@ -41,7 +41,6 @@ class UpgradeService {
 
   // Get upgrades filtered by upgrade slot code
   getUpgradesForSlotCode(slotCode) {
-    const allUpgrades = this.getAllUpgrades();
     
     // Map slot codes to upgrade categories
     const slotToCategory = {

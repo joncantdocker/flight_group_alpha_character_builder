@@ -11,7 +11,6 @@ const CharacterBuilder = () => {
   const [editingCharacter, setEditingCharacter] = useState(null); // Temp state for unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
   
   // Snackbar state
@@ -387,7 +386,7 @@ const CharacterBuilder = () => {
 
   useEffect(() => {
     fetchCharacters();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load XP log when current character changes
   useEffect(() => {
@@ -397,7 +396,7 @@ const CharacterBuilder = () => {
     } else {
       setXpLog([]);
     }
-  }, [currentCharacter]);
+  }, [currentCharacter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle page refresh/close warnings
   useEffect(() => {
