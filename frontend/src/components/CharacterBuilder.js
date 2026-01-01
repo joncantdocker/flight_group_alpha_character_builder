@@ -29,6 +29,7 @@ const CharacterBuilder = () => {
   const [toLoadoutAmount, setToLoadoutAmount] = useState(0);
   const [toPathAmount, setToPathAmount] = useState(0);
   const [xpLog, setXpLog] = useState([]);
+  const [tempXpLogEntries, setTempXpLogEntries] = useState([]); // Track unsaved XP log entries
 
   // Path selection
   const [showPathSelection, setShowPathSelection] = useState(false);
@@ -101,6 +102,9 @@ const CharacterBuilder = () => {
       setEditingCharacter(character ? { ...character } : null);
       setHasUnsavedChanges(false);
       
+      // Clear temporary XP log entries when switching characters
+      setTempXpLogEntries([]);
+      
       // Reset transfer amounts when switching characters
       setAddBankedAmount(0);
       setToLoadoutAmount(0);
@@ -169,9 +173,13 @@ const CharacterBuilder = () => {
       amount,
       description
     };
-    const newLog = [logEntry, ...xpLog].slice(0, 10); // Keep last 10 entries
+    
+    // Add to temporary entries (don't save yet)
+    setTempXpLogEntries(prev => [logEntry, ...prev]);
+    
+    // Update display to include temp entries
+    const newLog = [logEntry, ...xpLog].slice(0, 10);
     setXpLog(newLog);
-    saveXpLog(currentCharacter.id, newLog);
   };
 
   const addBankedXP = () => {
@@ -269,6 +277,14 @@ const CharacterBuilder = () => {
       setEditingCharacter({ ...savedChar });
       setHasUnsavedChanges(false);
       
+      // Persist temporary XP log entries
+      if (tempXpLogEntries.length > 0) {
+        const persistedLog = loadXpLog(savedChar.id);
+        const newLog = [...tempXpLogEntries, ...persistedLog].slice(0, 10);
+        saveXpLog(savedChar.id, newLog);
+        setTempXpLogEntries([]); // Clear temp entries
+      }
+      
       // Update in characters list
       setCharacters(chars => 
         chars.map(char => char.id === savedChar.id ? savedChar : char)
@@ -287,6 +303,12 @@ const CharacterBuilder = () => {
     if (currentCharacter) {
       setEditingCharacter({ ...currentCharacter });
       setHasUnsavedChanges(false);
+      
+      // Remove temporary XP log entries and restore original log
+      setTempXpLogEntries([]);
+      const originalLog = loadXpLog(currentCharacter.id);
+      setXpLog(originalLog);
+      
       setMessage('Changes discarded');
       setTimeout(() => setMessage(''), 3000);
     }
@@ -514,8 +536,10 @@ const CharacterBuilder = () => {
     if (currentCharacter) {
       const log = loadXpLog(currentCharacter.id);
       setXpLog(log);
+      setTempXpLogEntries([]); // Clear temporary entries when loading character
     } else {
       setXpLog([]);
+      setTempXpLogEntries([]);
     }
   }, [currentCharacter]); // eslint-disable-line react-hooks/exhaustive-deps
 
