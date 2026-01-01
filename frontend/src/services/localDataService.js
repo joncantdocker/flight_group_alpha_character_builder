@@ -116,13 +116,13 @@ class LocalDataService {
 
   // Leveling system
   getLevelUpCost(currentRank) {
-    if (currentRank >= 8) return null; // Max rank
+    if (currentRank >= 11) return null; // Max rank
     const nextRank = currentRank + 1;
     return nextRank * nextRank; // Cost = next rank squared
   }
 
   canLevelUp(character) {
-    if (character.rank >= 8) return false;
+    if (character.rank >= 11) return false;
     const cost = this.getLevelUpCost(character.rank);
     return character.bankedXP >= cost;
   }
@@ -288,8 +288,8 @@ class LocalDataService {
       }
       
       // Validate ranges
-      if (char.rank < 1 || char.rank > 8) {
-        throw new Error('Invalid rank. Rank must be between 1 and 8.');
+      if (char.rank < 1 || char.rank > 11) {
+        throw new Error('Invalid rank. Rank must be between 1 and 11.');
       }
       
       if (char.bankedXP < 0 || char.loadoutXP < 0 || char.pathXP < 0) {

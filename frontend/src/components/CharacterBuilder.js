@@ -303,7 +303,7 @@ const CharacterBuilder = () => {
       const cost = apiService.getLevelUpCost(editingCharacter.rank);
       
       // Check if character can level up using current editing character data
-      if (editingCharacter.rank >= 8) {
+      if (editingCharacter.rank >= 11) {
         showSnackbar('Already at maximum rank', 'error');
         return;
       }
@@ -548,7 +548,7 @@ const CharacterBuilder = () => {
   // Enhanced canLevelUp logic that considers path selection for rank 2->3
   const canLevelUp = editingCharacter ? (() => {
     // Check XP requirement using editing character data
-    if (editingCharacter.rank >= 8) return false;
+    if (editingCharacter.rank >= 11) return false;
     const cost = apiService.getLevelUpCost(editingCharacter.rank);
     const hasEnoughXP = editingCharacter.bankedXP >= cost;
     
@@ -563,7 +563,7 @@ const CharacterBuilder = () => {
   // Get appropriate level up button text
   const getLevelUpButtonText = () => {
     if (!editingCharacter) return 'Cannot Level Up';
-    if (editingCharacter.rank >= 8) return 'Max Level Reached';
+    if (editingCharacter.rank >= 11) return 'Max Level Reached';
     
     // Check XP requirement using editing character data
     const cost = apiService.getLevelUpCost(editingCharacter.rank);
@@ -887,7 +887,7 @@ const CharacterBuilder = () => {
               
               <h4>Rank Information</h4>
               <p><strong>Current Rank:</strong> {editingCharacter.rank} - {getRankName(editingCharacter.rank)}</p>
-              {editingCharacter.rank < 8 && (
+              {editingCharacter.rank < 11 && (
                 <div>
                   <p><strong>Next Level Cost:</strong> {levelUpCost} Banked XP</p>
                   <button
@@ -903,7 +903,7 @@ const CharacterBuilder = () => {
                   </button>
                 </div>
               )}
-              {editingCharacter.rank >= 8 && (
+              {editingCharacter.rank >= 11 && (
                 <p style={{ color: '#28a745', fontWeight: 'bold' }}>🏆 Maximum Rank Achieved!</p>
               )}
             </div>
