@@ -1588,7 +1588,7 @@
       "code": "V",
       "name": "Admiral Sloane",
       "minimum_in": 3,
-      "cpp_cost": 6,
+      "cpp_cost": 16,
       "restrictions": null,
       "card_text": "After another friendly ship at range 0-3 defends, if it is destroyed, the attacker gains 2 stress tokens. While a friendly ship at range 0-3 performs an attack against a stressed ship, it may reroll 1 attack die."
     },
