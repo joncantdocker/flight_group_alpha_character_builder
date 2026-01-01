@@ -613,7 +613,7 @@ const CharacterBuilder = () => {
               style={{ fontSize: '14px', padding: '8px 16px' }}
               title="Save All Characters"
             >
-              🖫
+              💾
             </button>
             <button 
               className="button" 
@@ -622,7 +622,7 @@ const CharacterBuilder = () => {
               style={{ fontSize: '14px', padding: '8px 16px', background: '#17a2b8' }}
               title="Export Character"
             >
-              ⤓
+              📥
             </button>
             <button 
               className="button" 
@@ -631,7 +631,7 @@ const CharacterBuilder = () => {
               style={{ fontSize: '14px', padding: '8px 16px', background: '#28a745' }}
               title="Import Character"
             >
-              ⤒
+              📤
             </button>
             <button 
               className="button" 

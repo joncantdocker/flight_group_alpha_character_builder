@@ -5,6 +5,8 @@ const Header = ({ apiStatus }) => {
   const [showCharacterMenu, setShowCharacterMenu] = useState(false);
   const [characters, setCharacters] = useState([]);
   const [currentCharacter, setCurrentCharacter] = useState(null);
+  const [showNewCharacterForm, setShowNewCharacterForm] = useState(false);
+  const [newCharacterCallsign, setNewCharacterCallsign] = useState('');
 
   useEffect(() => {
     const loadCharacters = async () => {
@@ -26,6 +28,8 @@ const Header = ({ apiStatus }) => {
     const handleClickOutside = (event) => {
       if (showCharacterMenu && !event.target.closest('.header-character-menu')) {
         setShowCharacterMenu(false);
+        setShowNewCharacterForm(false);
+        setNewCharacterCallsign('');
       }
     };
 
@@ -45,6 +49,38 @@ const Header = ({ apiStatus }) => {
       window.dispatchEvent(new CustomEvent('characterChanged', { detail: character }));
     } catch (err) {
       console.error('Failed to switch character:', err);
+    }
+  };
+
+  const createNewCharacter = async () => {
+    if (!newCharacterCallsign.trim()) return;
+    
+    try {
+      const newChar = await apiService.createCharacter({
+        callsign: newCharacterCallsign,
+        rank: 1,
+        currentXp: 0,
+        spentXp: 0,
+        bankedXp: 0
+      });
+      
+      // Refresh character list
+      const chars = await apiService.getCharacters();
+      setCharacters(chars);
+      
+      // Switch to new character
+      apiService.setCurrentCharacter(newChar.id);
+      setCurrentCharacter(newChar);
+      
+      // Reset form
+      setNewCharacterCallsign('');
+      setShowNewCharacterForm(false);
+      setShowCharacterMenu(false);
+      
+      // Trigger event for other components
+      window.dispatchEvent(new CustomEvent('characterChanged', { detail: newChar }));
+    } catch (err) {
+      console.error('Failed to create character:', err);
     }
   };
 
@@ -82,6 +118,52 @@ const Header = ({ apiStatus }) => {
                     {char.callsign} (Rank {char.rank})
                   </div>
                 ))}
+                
+                {/* New Character Section - Mobile Only */}
+                <div className="character-menu-divider"></div>
+                {!showNewCharacterForm ? (
+                  <div
+                    className="character-option new-character-option"
+                    onClick={() => setShowNewCharacterForm(true)}
+                  >
+                    ➕ Create New Character
+                  </div>
+                ) : (
+                  <div className="new-character-form">
+                    <input
+                      type="text"
+                      placeholder="Enter callsign..."
+                      value={newCharacterCallsign}
+                      onChange={(e) => setNewCharacterCallsign(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          createNewCharacter();
+                        }
+                      }}
+                      className="new-character-input"
+                      autoFocus
+                    />
+                    <div className="new-character-buttons">
+                      <button 
+                        className="create-button"
+                        onClick={createNewCharacter}
+                        disabled={!newCharacterCallsign.trim()}
+                      >
+                        Create
+                      </button>
+                      <button 
+                        className="cancel-button"
+                        onClick={() => {
+                          setShowNewCharacterForm(false);
+                          setNewCharacterCallsign('');
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
