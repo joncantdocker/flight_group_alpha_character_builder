@@ -7,7 +7,7 @@ class PathUpgradesService {
 
   async loadPathData() {
     try {
-      const response = await fetch('/path_upgrades.json');
+      const response = await fetch('./path_upgrades.json');
       this.pathData = await response.json();
     } catch (error) {
       console.error('Failed to load path upgrades data:', error);

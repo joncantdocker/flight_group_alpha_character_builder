@@ -7,7 +7,7 @@ class UpgradeService {
 
   async loadUpgradeData() {
     try {
-      const response = await fetch('/upgrades.json');
+      const response = await fetch('./upgrades.json');
       this.upgradeData = await response.json();
     } catch (error) {
       console.error('Failed to load upgrade data:', error);

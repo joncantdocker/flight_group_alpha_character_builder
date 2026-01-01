@@ -8,7 +8,7 @@ class ShipService {
 
   async loadShipData() {
     try {
-      const response = await fetch('/ship_list.json');
+      const response = await fetch('./ship_list.json');
       this.shipData = await response.json();
       this.isLoaded = true;
     } catch (error) {
