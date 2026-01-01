@@ -29,7 +29,7 @@ const CharacterBuilder = () => {
   const [toLoadoutAmount, setToLoadoutAmount] = useState(0);
   const [toPathAmount, setToPathAmount] = useState(0);
   const [xpLog, setXpLog] = useState([]);
-  const [tempXpLogEntries, setTempXpLogEntries] = useState([]); // Track unsaved XP log entries
+  const [, setTempXpLogEntries] = useState([]); // Track unsaved XP log entries
 
   // Path selection
   const [showPathSelection, setShowPathSelection] = useState(false);
@@ -46,10 +46,6 @@ const CharacterBuilder = () => {
     return saved ? JSON.parse(saved) : [];
   };
 
-  const saveXpLog = (characterId, log) => {
-    if (!characterId) return;
-    localStorage.setItem(`xp_log_${characterId}`, JSON.stringify(log));
-  };
 
   // Listen for character changes from header
   useEffect(() => {
