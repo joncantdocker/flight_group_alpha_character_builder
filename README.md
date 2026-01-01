@@ -1,211 +1,274 @@
-# Flight Group Alpha - Lightweight Edition
+# Flight Group Alpha - X-Wing Character Builder
 
-A modern lightweight React web application for flight route management. All data is stored locally in the browser - no backend or database required!
+A comprehensive React web application for creating and managing X-Wing miniatures game pilot characters. Features character progression, ship selection with upgrades, pilot specialization paths, and persistent XP tracking.
+
+## 🌟 Live Demo
+
+**[https://joncantdocker.github.io/flight_group_alpha_character_builder/](https://joncantdocker.github.io/flight_group_alpha_character_builder/)**
+
+## ✨ Features
+
+### Character Management
+- **Create Characters**: Build pilots with unique callsigns
+- **Experience System**: Manage Banked XP, Loadout XP, and Path XP
+- **Rank Progression**: Level up characters using XP with automatic cost calculation
+- **XP Logging**: Track all XP transactions with timestamps (saved/discarded changes)
+- **Import/Export**: Save and share character builds
+
+### Pilot Specialization Paths
+- **Path Selection**: Choose from various pilot specialization paths
+- **Rank-Based Upgrades**: Automatically gain upgrades based on character rank
+- **Path Benefits**: Each path provides unique bonuses and abilities
+- **Progression Tracking**: Visual indicators for path advancement
+
+### Ship Configuration
+- **Ship Selection**: Choose from comprehensive X-Wing ship roster
+- **Upgrade Management**: Configure ship upgrades by slot type
+- **Persistent Selection**: Ship choices saved per character
+- **Upgrade Filtering**: Smart filtering based on ship compatibility and restrictions
+
+### Data Persistence
+- **Character-Specific Storage**: Each character's data stored independently
+- **Ship Selection Memory**: Remembers ship choices per character
+- **XP Log History**: Persistent transaction history per character
+- **Browser Storage**: All data saved locally with no account required
 
 ## 🚀 Technology Stack
 
-- **Frontend**: React 18 with React Router
-- **Data Storage**: Browser localStorage
-- **Containerization**: Docker (Frontend Only)
-- **State Management**: React Hooks + localStorage
+- **Frontend**: React 18 with functional components and hooks
+- **UI**: Custom CSS with X-Wing symbol font integration
+- **State Management**: React hooks with localStorage persistence
+- **Data Storage**: Browser localStorage (no backend required)
+- **Deployment**: GitHub Pages with GitHub Actions CI/CD
+- **Development**: Docker containerization for local testing
 
 ## 📁 Project Structure
 
 ```
 flight_group_alpha/
-├── frontend/                 # React frontend application
+├── frontend/                    # React frontend application
 │   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── services/        # Local data service layer
-│   │   ├── App.js          # Main React component
-│   │   └── index.js        # React entry point
-│   ├── public/             # Static assets
-│   ├── package.json        # Node.js dependencies
-│   └── Dockerfile          # Frontend container config
-├── docker-compose.frontend-only.yml  # Lightweight container setup
-├── backend/                 # (Optional - not used in lightweight mode)
-├── database/               # (Optional - not used in lightweight mode)
-└── README.md              # This file
+│   │   ├── components/         # React components
+│   │   │   ├── CharacterBuilder.js    # Main character management
+│   │   │   ├── ShipSelector.js        # Ship configuration
+│   │   │   ├── XWingSymbols.js        # Symbol rendering
+│   │   │   └── ...
+│   │   ├── services/           # Data and business logic
+│   │   │   ├── apiService.js          # Character CRUD operations
+│   │   │   ├── localDataService.js    # localStorage interface
+│   │   │   ├── pathUpgradesService.js # Path progression logic
+│   │   │   ├── shipService.js         # Ship data management
+│   │   │   └── upgradeService.js      # Upgrade logic and filtering
+│   │   └── fonts/             # X-Wing symbol fonts
+│   ├── public/                # Static game data
+│   │   ├── path_upgrades.json # Pilot path definitions
+│   │   ├── ship_list.json     # Ship configurations
+│   │   ├── upgrades.json      # Upgrade cards database
+│   │   └── ...
+│   ├── package.json          # Dependencies and scripts
+│   └── Dockerfile           # Container configuration
+├── .github/workflows/       # GitHub Actions deployment
+│   └── deploy.yml          # Automated deployment to GitHub Pages
+└── docker-compose.yml      # Local development environment
 ```
 
 ## 🛠️ Prerequisites
 
-- Docker (for containerized deployment)
-- OR Node.js 16+ (for local development)
+- **Docker**: For containerized local development
+- **Node.js 18+**: For direct development (optional)
+- **Modern Browser**: With localStorage support
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
+### Option 1: Use Live Version (Recommended)
+Simply visit: **[https://joncantdocker.github.io/flight_group_alpha_character_builder/](https://joncantdocker.github.io/flight_group_alpha_character_builder/)**
 
-#### Simple Frontend-Only Deployment
+### Option 2: Local Development with Docker
+
 ```bash
-cd frontend
-docker build -t flight-group-alpha .
-docker run -p 3000:3000 flight-group-alpha
+# Clone the repository
+git clone https://github.com/joncantdocker/flight_group_alpha_character_builder.git
+cd flight_group_alpha_character_builder
+
+# Start the development environment
+docker-compose up --build
+
+# Access the application
+open http://localhost:3000
 ```
 
-#### Using Docker Compose
-```bash
-docker-compose -f docker-compose.frontend-only.yml up --build
-```
-
-### Option 2: Local Development
+### Option 3: Local Development with Node.js
 
 ```bash
 cd frontend
 npm install
 npm start
+
+# Application available at http://localhost:3000
 ```
 
-### 3. Access the Application
+## 🎮 Usage Guide
 
-- **Application**: http://localhost:3000
+### Getting Started
+1. **Create a Character**: Click "Create New Character" and enter a callsign
+2. **Select a Path**: Choose a pilot specialization path for unique benefits
+3. **Add Experience**: Use "Add Banked XP" to give your character experience points
+4. **Level Up**: Use "Level Up" to increase rank (costs XP based on target rank)
+5. **Transfer XP**: Move XP between Banked, Loadout, and Path categories
 
-## 🧪 Testing the Setup
+### Ship Configuration
+1. **Select Ship**: Choose your character's ship from the dropdown
+2. **Configure Upgrades**: Select upgrades for each available slot
+3. **Save Configuration**: Ship selection is automatically saved per character
+4. **Rank-Based Upgrades**: Some upgrades are automatically granted based on character rank
 
-1. Open http://localhost:3000 in your browser
-2. You should see the Flight Group Alpha homepage with a green status indicator
-3. Try adding, editing, and deleting flight routes
-4. Data will persist across browser sessions (stored in localStorage)
-
-## 📚 Features
-
-### Flight Route Management
-- **Create**: Add new flight routes with title, description, and status
-- **Read**: View all stored flight routes in a clean interface
-- **Update**: Edit existing flight routes inline
-- **Delete**: Remove flight routes with confirmation
-- **Persist**: All data automatically saved to localStorage
-
-### User Experience
-- Real-time updates without page refresh
-- Clean, responsive interface
-- Status indicators for system health
-- Form validation and error handling
+### XP Management
+- **Banked XP**: General experience pool for leveling up
+- **Loadout XP**: Points available for ship and upgrade purchases
+- **Path XP**: Points specific to your chosen specialization path
+- **Transfer System**: Move XP between categories as needed
 
 ## 🔧 Development
 
-### Adding New Features
+### Adding New Ships
+1. Edit `frontend/public/ship_list.json`
+2. Add ship definition with slots and statistics
+3. Upgrades will automatically filter based on ship compatibility
+
+### Adding New Upgrades
+1. Edit `frontend/public/upgrades.json`
+2. Include slot type, restrictions, and effects
+3. System will handle filtering and availability
+
+### Adding Pilot Paths
+1. Edit `frontend/public/path_upgrades.json`
+2. Define rank-based benefits and upgrades
+3. Include path-specific bonuses and restrictions
+
+### Local Testing
 ```bash
+# Development with hot reload
+docker-compose up --build
+
+# Production build test
 cd frontend
-
-# Install new packages
-npm install package-name
-
-# Start development server
-npm start
-
-# Build for production
 npm run build
+npm install -g serve
+serve -s build -l 3000
 ```
-
-### Local Data Storage
-The application uses a custom `localDataService` that:
-- Stores data in browser localStorage
-- Provides async API-like interface
-- Includes sample data initialization
-- Simulates network delays for realistic feel
 
 ## 🚦 Common Commands
 
 ```bash
-# Development mode
-cd frontend && npm start
+# Development
+docker-compose up --build              # Start development server
+docker-compose down                    # Stop containers
 
-# Production build
-cd frontend && npm run build
+# Frontend only
+cd frontend
+npm start                             # Development server
+npm run build                         # Production build
+npm test                              # Run tests
 
-# Docker build
-docker build -t flight-app frontend/
-
-# Docker run
-docker run -p 3000:3000 flight-app
-
-# Docker Compose (frontend only)
-docker-compose -f docker-compose.frontend-only.yml up
+# Deployment
+git push origin main                  # Auto-deploy to GitHub Pages
 ```
 
-## 🔐 Data Storage Notes
+## 💾 Data Storage
 
-### Browser localStorage:
-- Data persists across browser sessions
-- Limited to ~5-10MB per origin
-- Cleared when user clears browser data
-- Domain-specific (not shared across domains)
+### Browser localStorage Features:
+- **Character-Specific Keys**: Each character's data stored separately
+- **Ship Selection Memory**: `current_ship_selection_${characterId}`
+- **XP Transaction History**: `xp_log_${characterId}`
+- **Cross-Session Persistence**: Data survives browser restarts
+- **No Account Required**: Everything stored locally
 
-### For Production:
-1. Consider implementing data export/import features
-2. Add backup/restore functionality
-3. Implement data validation
-4. Consider progressive web app (PWA) features for offline support
+### Data Export/Import:
+- **Export Characters**: Copy character data as JSON string
+- **Import Characters**: Load characters from exported JSON
+- **Backup Strategy**: Regular exports recommended for important characters
 
-## 🛠️ Customization
+## 🎨 Customization
 
-### Adding New Components
-1. Create component in `frontend/src/components/`
-2. Import and use in your routes or other components
-3. Update routing in `App.js` if needed
+### Styling
+- Custom CSS with X-Wing themed design
+- Integrated X-Wing symbol font for authentic look
+- Responsive layout for desktop and mobile
 
-### Extending Data Models
-1. Modify the data structure in `localDataService.js`
-2. Update component forms and displays
-3. Consider adding migration logic for existing users
+### Game Data Updates
+- JSON files in `public/` directory can be updated
+- No code changes required for new ships/upgrades
+- Hot reload in development for rapid iteration
 
-### Adding Authentication
-The `localDataService` includes basic user management:
-- User registration and login
-- Session management
-- Simple password validation
+## 🔍 Technical Features
 
-## � Sample Data
+### Smart Upgrade Filtering
+- **Slot Compatibility**: Only show upgrades that fit ship slots
+- **Restriction Checking**: Honor upgrade restrictions and requirements
+- **Compound Upgrades**: Handle upgrades that modify ship slots
+- **Path Integration**: Include path-granted upgrades automatically
 
-The application includes sample flight routes:
-- Flight Route Alpha-1 (LAX to JFK)
-- Flight Route Beta-2 (ORD to DFW) 
-- Flight Route Gamma-3 (LAX to LHR)
+### Character Progression
+- **Dynamic XP Costs**: Level-up costs scale with target rank
+- **Path Benefits**: Each specialization provides unique advantages
+- **Rank Tracking**: Visual progression indicators
+- **XP Transaction Log**: Detailed history with rollback on unsaved changes
+
+### State Management
+- **Optimistic Updates**: Immediate UI feedback with validation
+- **Unsaved Change Tracking**: Prevent data loss with confirmation dialogs
+- **Character Switching**: Safe navigation with change detection
+- **Error Recovery**: Graceful handling of data corruption
 
 ## 🐛 Troubleshooting
 
-### Common Issues:
+### Common Issues
 
-1. **Data not persisting**
-   - Check if localStorage is enabled in browser
-   - Ensure you're on the same domain/port
-   - Check browser storage limits
+**Characters Not Saving**
+- Check browser localStorage permissions
+- Ensure sufficient storage space (5-10MB limit)
+- Try clearing browser cache
 
-2. **App not loading**
-   - Check console for JavaScript errors
-   - Verify all dependencies are installed: `npm install`
-   - Clear browser cache and try again
+**Ship Data Not Loading**
+- Verify internet connection for initial JSON loading
+- Check browser console for network errors
+- Try hard refresh (Ctrl+F5)
 
-3. **Docker build issues**
-   - Ensure Docker is running
-   - Check Dockerfile syntax
-   - Try rebuilding without cache: `docker build --no-cache`
+**Upgrades Not Showing**
+- Confirm ship selection is saved
+- Check upgrade slot compatibility
+- Verify upgrade restrictions are met
 
-## 🌟 Benefits of Lightweight Architecture
+**XP Log Issues**
+- XP changes appear but disappear after refresh: Save character to persist changes
+- Old transactions missing: Check if character was saved after changes
 
-- **Zero Infrastructure**: No database servers or backend APIs to maintain
-- **Fast Deployment**: Single container or static file deployment
-- **Offline Capable**: Works without internet connection once loaded
-- **Privacy Friendly**: All data stays in user's browser
-- **Cost Effective**: No server-side resources needed
-- **Simple Backup**: Users can export/import their data
+## 🌍 Browser Compatibility
 
-## 🔄 Migration from Full-Stack
+- **Chrome 80+**: Full support
+- **Firefox 75+**: Full support  
+- **Safari 13+**: Full support
+- **Edge 80+**: Full support
+- **Mobile Browsers**: Responsive design with touch support
 
-If you want to upgrade to the full backend later:
-1. The backend and database code is still available in the project
-2. Modify `apiService.js` to use HTTP endpoints instead of localStorage
-3. Deploy backend services using the existing Docker configurations
+## 🔒 Privacy & Security
+
+- **No Data Collection**: All data stays in your browser
+- **No Accounts**: No registration or login required
+- **Offline Capable**: Works without internet after initial load
+- **Export Control**: You control all data backup and sharing
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes to the frontend
-4. Test locally with `npm start`
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature-name`
+3. Test locally with Docker: `docker-compose up --build`
+4. Submit a pull request with detailed description
+
+### Contributing Game Data
+- Ship definitions: Edit `ship_list.json`
+- Upgrade cards: Edit `upgrades.json`
+- Pilot paths: Edit `path_upgrades.json`
 
 ## 📄 License
 
@@ -213,12 +276,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🆘 Support
 
-For support, please:
-1. Check browser console for error messages
-2. Verify localStorage is working in your browser
-3. Try clearing browser data and reloading
-4. Open an issue on GitHub
+For support:
+1. Check the browser console for error messages
+2. Try clearing localStorage: `localStorage.clear()`
+3. Open an issue on GitHub with reproduction steps
+4. Join the community for game rules questions
 
 ---
 
-Enjoy your lightweight flight management app! ✈️
+**May the Force be with you, pilot!** ✈️⭐
