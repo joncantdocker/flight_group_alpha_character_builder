@@ -284,39 +284,6 @@ const CharacterBuilder = () => {
     setSelectedPath('');
   };
 
-  const saveCharacter = async () => {
-    if (!editingCharacter || !hasUnsavedChanges) return;
-    
-    try {
-      setLoading(true);
-      const savedChar = await apiService.updateCharacter(editingCharacter.id, editingCharacter);
-      
-      setCurrentCharacter(savedChar);
-      setEditingCharacter({ ...savedChar });
-      setHasUnsavedChanges(false);
-      
-      // Persist temporary XP log entries
-      if (tempXpLogEntries.length > 0) {
-        const persistedLog = loadXpLog(savedChar.id);
-        const newLog = [...tempXpLogEntries, ...persistedLog].slice(0, 10);
-        saveXpLog(savedChar.id, newLog);
-        setTempXpLogEntries([]); // Clear temp entries
-      }
-      
-      // Update in characters list
-      setCharacters(chars => 
-        chars.map(char => char.id === savedChar.id ? savedChar : char)
-      );
-      
-      setMessage('Character saved successfully!');
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      showSnackbar(err.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const discardChanges = () => {
     if (currentCharacter) {
       setEditingCharacter({ ...currentCharacter });
