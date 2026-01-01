@@ -41,7 +41,7 @@
     },
     "`": {
         "name": "TIE Aggressor",
-        "upgrades": ["PMM"],
+        "upgrades": ["PMMU"],
         "hyperdrive": false
     },
     "N": {
