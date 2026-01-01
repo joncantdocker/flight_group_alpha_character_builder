@@ -483,7 +483,8 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                   styles={{
                     container: (provided) => ({
                       ...provided,
-                      flex: 1
+                      flex: 1,
+                      minWidth: '0' // Allow flex shrinking
                     }),
                     control: (provided) => ({
                       ...provided,
@@ -492,7 +493,12 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                     }),
                     option: (provided) => ({
                       ...provided,
-                      fontFamily: 'Arial, sans-serif'
+                      fontFamily: 'Arial, sans-serif',
+                      fontSize: '14px'
+                    }),
+                    menu: (provided) => ({
+                      ...provided,
+                      fontSize: '14px'
                     })
                   }}
                   isClearable
@@ -563,7 +569,9 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                         </div>
                       ) : null}
                       <br />
-                      <em>{parseXWingText(selectedUpgrade.card_text)}</em>
+                      <div style={{ fontStyle: 'italic', wordBreak: 'break-word' }}>
+                        {parseXWingText(selectedUpgrade.card_text)}
+                      </div>
                     </div>
                   );
                 }
@@ -578,52 +586,45 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
 
   return (
     <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: '15px' }}>
         <h3>Ship Selection</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="mobile-button-group" style={{ marginTop: '10px' }}>
           {hasUnsavedChanges && (
             <span style={{
               color: '#dc3545',
               fontSize: '14px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              alignSelf: 'center'
             }}>
               ● Unsaved Changes
             </span>
           )}
           {hasUnsavedChanges && (
-            <>
+            <div className="mobile-button-row">
               <button
                 onClick={discardChanges}
+                className="button"
                 style={{
                   background: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  cursor: 'pointer'
+                  fontSize: '12px'
                 }}
               >
                 🚫 Discard
               </button>
               <button
                 onClick={saveShipSelection}
+                className="button"
                 style={{
                   background: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  cursor: 'pointer'
+                  fontSize: '12px'
                 }}
               >
                 💾 Save
               </button>
-            </>
+            </div>
           )}
           {currentShipSelection && !hasUnsavedChanges && (
-            <small style={{ color: '#28a745', fontSize: '12px' }}>
+            <small style={{ color: '#28a745', fontSize: '12px', alignSelf: 'center' }}>
               ✓ Selection saved
             </small>
           )}
@@ -639,11 +640,12 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
           value={editingShipSelection?.shipKey || ''}
           onChange={(e) => handleShipSelection(e.target.value)}
           style={{
-            padding: '8px',
+            padding: '10px',
             borderRadius: '4px',
             border: '1px solid #ccc',
-            minWidth: '300px',
-            fontSize: '14px'
+            width: '100%',
+            fontSize: '16px', // Prevents zoom on iOS
+            boxSizing: 'border-box'
           }}
         >
           <option value="">-- Select a Ship --</option>
@@ -657,29 +659,54 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
 
       {/* Ship Details Display */}
       {editingShipSelection?.selectedShip && (
-        <div style={{
-          background: '#f8f9fa',
-          padding: '20px',
-          borderRadius: '8px',
-          border: '1px solid #dee2e6'
-        }}>
-          <h4 style={{
-            margin: '0 0 15px 0',
-            color: '#007bff',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
+        <div className="ship-details">
+          <div className="ship-header" style={{
+            margin: '0 0 15px 0'
           }}>
-            <span style={{
-              fontFamily: 'X-Wing-Ships, Arial, sans-serif',
-              fontSize: '20px'
+            <h4 style={{ 
+              color: '#007bff', 
+              margin: '0 0 10px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              flexWrap: 'wrap'
             }}>
-              {editingShipSelection.selectedShip.key}
-            </span>
-            {editingShipSelection.selectedShip.name}
-          </h4>
+              <span style={{
+                fontFamily: 'X-Wing-Ships, Arial, sans-serif',
+                fontSize: '20px'
+              }}>
+                {editingShipSelection.selectedShip.key}
+              </span>
+              {editingShipSelection.selectedShip.name}
+            </h4>
 
-          {/* Loadout XP Cost */}
+            {/* Ship Basic Info - Now below ship name */}
+            <div>
+              <h5 style={{ margin: '0 0 10px 0' }}>Ship Information:</h5>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '10px'
+              }}>
+                <span style={{
+                  display: 'inline-block',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: editingShipSelection.selectedShip.hyperdrive ? '#28a745' : '#dc3545'
+                }}></span>
+                <span style={{
+                  fontWeight: 'bold',
+                  color: editingShipSelection.selectedShip.hyperdrive ? '#28a745' : '#dc3545'
+                }}>
+                  Hyperdrive: {editingShipSelection.selectedShip.hyperdrive ? 'Yes' : 'No'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* XP Cost Display */}
           <div style={{
             padding: '10px',
             background: '#fff3cd',
@@ -687,13 +714,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
             border: '1px solid #ffeaa7',
             marginBottom: '20px'
           }}>
-            {/* XP Cost Display */}
-            <div style={{
-              display: 'flex',
-              gap: '20px',
-              alignItems: 'flex-start',
-              marginBottom: '15px'
-            }}>
+            <div className="ship-stats">
               {/* Loadout XP Cost */}
               <div>
                 <h6 style={{ margin: '0 0 5px 0', color: '#856404' }}>Loadout XP Required:</h6>
@@ -732,7 +753,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                     const upgrade = upgradeService.getUpgradeByName(upgradeName);
                     const isPath = upgradeService.isPathUpgrade(upgrade);
                     return (
-                      <div key={`ship-${index}`} style={{ color: '#6c757d' }}>
+                      <div key={`ship-${index}`} style={{ color: '#6c757d', wordBreak: 'break-word' }}>
                         • {upgradeName} ({upgrade?.cpp_cost || 0} XP) - Ship {isPath ? '(Path)' : '(Loadout)'}
                       </div>
                     );
@@ -745,7 +766,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                     const upgrade = upgradeService.getUpgradeByName(upgradeName);
                     const isPath = upgradeService.isPathUpgrade(upgrade);
                     return (
-                      <div key={`rank-${index}`} style={{ color: '#6c757d' }}>
+                      <div key={`rank-${index}`} style={{ color: '#6c757d', wordBreak: 'break-word' }}>
                         • {upgradeName} ({upgrade?.cpp_cost || 0} XP) - Rank {isPath ? '(Path)' : '(Loadout)'}
                       </div>
                     );
@@ -754,7 +775,8 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+          {/* Upgrade Slots Section - Responsive Layout */}
+          <div className="responsive-grid responsive-grid-2" style={{ gap: '20px' }}>
             <div>
               <h5 style={{ margin: '0 0 10px 0' }}>Ship Upgrade Slots:</h5>
               {editingShipSelection?.selectedShip?.upgrades && editingShipSelection.selectedShip.upgrades.length > 0 ? (
@@ -1045,30 +1067,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                   </p>
                 </div>
               )}
-            </div>
-
-            <div>
-              <h5 style={{ margin: '0 0 10px 0' }}>Ship Information:</h5>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '10px'
-              }}>
-                <span style={{
-                  display: 'inline-block',
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: editingShipSelection.selectedShip.hyperdrive ? '#28a745' : '#dc3545'
-                }}></span>
-                <span style={{
-                  fontWeight: 'bold',
-                  color: editingShipSelection.selectedShip.hyperdrive ? '#28a745' : '#dc3545'
-                }}>
-                  Hyperdrive: {editingShipSelection.selectedShip.hyperdrive ? 'Yes' : 'No'}
-                </span>
-              </div>
             </div>
           </div>
         </div>

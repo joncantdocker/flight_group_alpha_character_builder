@@ -51,6 +51,21 @@ const CharacterBuilder = () => {
     localStorage.setItem(`xp_log_${characterId}`, JSON.stringify(log));
   };
 
+  // Listen for character changes from header
+  useEffect(() => {
+    const handleCharacterChange = (event) => {
+      const character = event.detail;
+      setCurrentCharacter(character);
+      setEditingCharacter(character ? { ...character } : null);
+      setHasUnsavedChanges(false);
+    };
+
+    window.addEventListener('characterChanged', handleCharacterChange);
+    return () => {
+      window.removeEventListener('characterChanged', handleCharacterChange);
+    };
+  }, []);
+
   // Snackbar helper functions
   const showSnackbar = (message, type = 'error') => {
     setSnackbar({ message, type, show: true });
@@ -220,21 +235,24 @@ const CharacterBuilder = () => {
   const transferToPath = () => {
     if (!editingCharacter || !toPathAmount || toPathAmount <= 0) return;
     
-    const amount = parseInt(toPathAmount);
-    if (amount > editingCharacter.bankedXP) {
+    const bankedAmount = parseInt(toPathAmount);
+    if (bankedAmount > editingCharacter.bankedXP) {
       showSnackbar('Not enough Banked XP for transfer', 'error');
       return;
     }
     
+    // Convert at 3 banked XP to 2 path XP ratio
+    const pathAmount = Math.floor((bankedAmount * 2) / 3);
+    
     const updatedChar = {
       ...editingCharacter,
-      bankedXP: editingCharacter.bankedXP - amount,
-      pathXP: editingCharacter.pathXP + amount
+      bankedXP: editingCharacter.bankedXP - bankedAmount,
+      pathXP: editingCharacter.pathXP + pathAmount
     };
     
     setEditingCharacter(updatedChar);
     setHasUnsavedChanges(true);
-    addXpToLog('transfer', -amount, `Transferred to Path XP`);
+    addXpToLog('transfer', -bankedAmount, `Transferred ${bankedAmount} Banked XP to ${pathAmount} Path XP`);
     setToPathAmount(0);
   };
 
@@ -600,70 +618,68 @@ const CharacterBuilder = () => {
 
   return (
     <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ marginBottom: '20px' }}>
         <h2>Character Builder</h2>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="mobile-button-group" style={{ marginTop: '10px' }}>
           {hasUnsavedChanges && (
             <span style={{ 
               color: '#dc3545', 
               fontSize: '14px', 
-              fontWeight: 'bold' 
+              fontWeight: 'bold',
+              alignSelf: 'center'
             }}>
               ● Unsaved Changes
             </span>
           )}
-          {hasUnsavedChanges && (
-            <>
+          <div className="mobile-button-row">
+            {hasUnsavedChanges && (
               <button 
-                className="button" 
+                className="button icon-button" 
                 onClick={discardChanges}
-                style={{ background: '#6c757d', fontSize: '14px', padding: '8px 16px' }}
+                style={{ background: '#6c757d', fontSize: '18px' }}
                 disabled={loading}
+                title="Discard Changes"
               >
-                🚫 Discard
+                🗙
               </button>
-              <button 
-                className="button" 
-                onClick={saveCharacter}
-                style={{ background: '#28a745', fontSize: '14px', padding: '8px 16px' }}
-                disabled={loading}
-              >
-                💾 Save
-              </button>
-            </>
-          )}
-          <button 
-            className="button" 
-            onClick={saveAll} 
-            disabled={loading}
-            style={{ fontSize: '14px', padding: '8px 16px' }}
-          >
-            💾 Save All
-          </button>
-          <button 
-            className="button" 
-            onClick={exportCharacter} 
-            disabled={loading || !currentCharacter}
-            style={{ fontSize: '14px', padding: '8px 16px', background: '#17a2b8' }}
-          >
-            Export Character
-          </button>
-          <button 
-            className="button" 
-            onClick={() => setShowImportExport(true)} 
-            disabled={loading}
-            style={{ fontSize: '14px', padding: '8px 16px', background: '#28a745' }}
-          >
-            Import Character
-          </button>
-          <button 
-            className="button" 
-            onClick={duplicateCharacter} 
-            disabled={loading || !currentCharacter}
-            style={{ fontSize: '14px', padding: '8px 16px', background: '#6f42c1' }}
-          >
-            Duplicate Character
-          </button>
+            )}
+            <button 
+              className="button" 
+              onClick={saveAll} 
+              disabled={loading}
+              style={{ fontSize: '14px', padding: '8px 16px' }}
+              title="Save All Characters"
+            >
+              🖫
+            </button>
+            <button 
+              className="button" 
+              onClick={exportCharacter} 
+              disabled={loading || !currentCharacter}
+              style={{ fontSize: '14px', padding: '8px 16px', background: '#17a2b8' }}
+              title="Export Character"
+            >
+              ⤓
+            </button>
+            <button 
+              className="button" 
+              onClick={() => setShowImportExport(true)} 
+              disabled={loading}
+              style={{ fontSize: '14px', padding: '8px 16px', background: '#28a745' }}
+              title="Import Character"
+            >
+              ⤒
+            </button>
+            <button 
+              className="button" 
+              onClick={duplicateCharacter} 
+              disabled={loading || !currentCharacter}
+              style={{ fontSize: '14px', padding: '8px 16px', background: '#6f42c1' }}
+              title="Duplicate Character"
+            >
+              ⎘
+            </button>
+          </div>
         </div>
       </div>
 
@@ -683,7 +699,7 @@ const CharacterBuilder = () => {
       {/* Import/Export Panel */}
       {showImportExport && (
         <div className="card" style={{ background: '#f8f9fa', border: '2px solid #007bff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
             <h3>Import/Export Character</h3>
             <button
               onClick={() => {
@@ -692,15 +708,16 @@ const CharacterBuilder = () => {
                 setImportString('');
               }}
               style={{ 
-                padding: '4px 8px', 
+                padding: '6px 12px', 
                 background: '#6c757d', 
                 color: 'white', 
                 border: 'none', 
                 borderRadius: '4px',
-                fontSize: '12px'
+                fontSize: '12px',
+                minHeight: '32px'
               }}
             >
-              ✕
+              ✕ Close
             </button>
           </div>
           
@@ -711,12 +728,12 @@ const CharacterBuilder = () => {
               <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
                 Copy this string to share your character:
               </p>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+              <div className="mobile-button-row" style={{ alignItems: 'flex-start' }}>
                 <textarea
                   value={exportString}
                   readOnly
                   style={{
-                    width: '100%',
+                    flex: 1,
                     height: '80px',
                     padding: '8px',
                     border: '1px solid #ccc',
@@ -729,14 +746,13 @@ const CharacterBuilder = () => {
                 />
                 <button
                   onClick={() => copyToClipboard(exportString)}
+                  className="button"
                   style={{
-                    padding: '8px 12px',
                     background: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
                     fontSize: '12px',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    minWidth: '80px',
+                    width: 'auto'
                   }}
                 >
                   📋 Copy
@@ -751,13 +767,13 @@ const CharacterBuilder = () => {
             <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
               Paste a character export string below:
             </p>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            <div className="mobile-button-row" style={{ alignItems: 'flex-start' }}>
               <textarea
                 value={importString}
                 onChange={(e) => setImportString(e.target.value)}
                 placeholder="Paste character export string here..."
                 style={{
-                  width: '100%',
+                  flex: 1,
                   height: '80px',
                   padding: '8px',
                   border: '1px solid #ccc',
@@ -770,15 +786,14 @@ const CharacterBuilder = () => {
               <button
                 onClick={importCharacter}
                 disabled={loading || !importString.trim()}
+                className="button"
                 style={{
-                  padding: '8px 12px',
                   background: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
                   fontSize: '12px',
                   whiteSpace: 'nowrap',
-                  opacity: (!importString.trim() || loading) ? 0.6 : 1
+                  opacity: (!importString.trim() || loading) ? 0.6 : 1,
+                  minWidth: '80px',
+                  width: 'auto'
                 }}
               >
                 {loading ? '⏳' : '📥'} Import
@@ -792,20 +807,24 @@ const CharacterBuilder = () => {
       )}
 
       {/* Character Selection Menu */}
-      <div className="card">
+      <div className="card character-selection-card">
         <h3>Character Selection ({characters.length} characters)</h3>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
+        
+        {/* Desktop Character List */}
+        <div className="character-list-desktop" style={{ marginBottom: '15px' }}>
           {characters.map(char => (
             <button
               key={char.id}
               onClick={() => switchCharacter(char.id)}
               style={{
-                padding: '8px 16px',
+                padding: '10px 16px',
                 borderRadius: '4px',
                 border: currentCharacter?.id === char.id ? '2px solid #007bff' : '1px solid #ccc',
                 background: currentCharacter?.id === char.id ? '#e3f2fd' : 'white',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: '14px',
+                minWidth: '120px',
+                flex: '0 0 auto'
               }}
             >
               {char.callsign} (Rank {char.rank})
@@ -815,41 +834,38 @@ const CharacterBuilder = () => {
         
         {!showNewCharacterForm ? (
           <button 
-            className="button" 
+            className="character-list-desktop button" 
             onClick={() => setShowNewCharacterForm(true)}
-            style={{ fontSize: '14px', padding: '8px 16px' }}
+            style={{ fontSize: '14px', padding: '8px 16px', width: 'auto' }}
           >
             ➕ New Character
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div className="mobile-button-group">
             <input
               type="text"
               placeholder="Enter callsign..."
               value={newCharacterCallsign}
               onChange={(e) => setNewCharacterCallsign(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && createNewCharacter()}
-              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '8px' }}
             />
-            <button 
-              className="button" 
-              onClick={createNewCharacter}
-              disabled={!newCharacterCallsign.trim() || loading}
-            >
-              Create
-            </button>
-            <button 
-              onClick={() => setShowNewCharacterForm(false)}
-              style={{ 
-                padding: '8px 12px', 
-                background: '#6c757d', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '4px' 
-              }}
-            >
-              Cancel
-            </button>
+            <div className="mobile-button-row">
+              <button 
+                className="button" 
+                onClick={createNewCharacter}
+                disabled={!newCharacterCallsign.trim() || loading}
+              >
+                Create
+              </button>
+              <button 
+                className="button"
+                onClick={() => setShowNewCharacterForm(false)}
+                style={{ background: '#6c757d' }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -896,13 +912,8 @@ const CharacterBuilder = () => {
           </div>
 
           {/* Rank and Level Up */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '20px', 
-            marginBottom: '20px' 
-          }}>
-            <div>
+          <div className="rank-path-grid" style={{ marginBottom: '20px' }}>
+            <div className="rank-path-section">
               <h4>Initiative</h4>
               <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#007bff' }}>
                 {(() => {
@@ -935,7 +946,7 @@ const CharacterBuilder = () => {
             </div>
 
             {/* Path Information */}
-            <div>
+            <div className="rank-path-section">
               <h4>Specialization Path</h4>
               <p><strong>Current Path:</strong> {editingCharacter.path || 'None'}</p>
               <p style={{ fontSize: '14px', color: '#6c757d' }}>
@@ -1006,9 +1017,9 @@ const CharacterBuilder = () => {
           {/* XP Pools */}
           <div>
             <h4>Experience Points</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+            <div className="responsive-grid responsive-grid-3">
               {/* Banked XP - Editable */}
-              <div>
+              <div className="xp-input-container">
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                   Banked XP:
                 </label>
@@ -1021,11 +1032,12 @@ const CharacterBuilder = () => {
                     padding: '8px', 
                     borderRadius: '4px', 
                     border: hasUnsavedChanges ? '2px solid #ffc107' : '1px solid #ccc',
-                    width: '100px'
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}
                 />
                 {/* Add Banked XP */}
-                <div style={{ marginTop: '10px' }}>
+                <div className="xp-transfer-container" style={{ marginTop: '10px' }}>
                   <input
                     type="number"
                     min="1"
@@ -1036,8 +1048,7 @@ const CharacterBuilder = () => {
                       padding: '6px', 
                       borderRadius: '4px', 
                       border: '1px solid #ccc',
-                      width: '80px',
-                      marginRight: '5px'
+                      flex: 1
                     }}
                   />
                   <button
@@ -1050,7 +1061,8 @@ const CharacterBuilder = () => {
                       border: 'none',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      minWidth: '50px'
                     }}
                   >
                     Add
@@ -1059,7 +1071,7 @@ const CharacterBuilder = () => {
               </div>
               
               {/* Loadout XP - Readonly with Transfer */}
-              <div>
+              <div className="xp-input-container">
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                   Loadout XP:
                 </label>
@@ -1071,13 +1083,14 @@ const CharacterBuilder = () => {
                     padding: '8px', 
                     borderRadius: '4px', 
                     border: '1px solid #ccc',
-                    width: '100px',
+                    width: '100%',
                     background: '#f8f9fa',
-                    color: '#6c757d'
+                    color: '#6c757d',
+                    boxSizing: 'border-box'
                   }}
                 />
                 {/* Transfer to Loadout */}
-                <div style={{ marginTop: '10px' }}>
+                <div className="xp-transfer-container" style={{ marginTop: '10px' }}>
                   <input
                     type="number"
                     min="1"
@@ -1088,8 +1101,7 @@ const CharacterBuilder = () => {
                       padding: '6px', 
                       borderRadius: '4px', 
                       border: '1px solid #ccc',
-                      width: '80px',
-                      marginRight: '5px'
+                      flex: 1
                     }}
                   />
                   <button
@@ -1102,7 +1114,8 @@ const CharacterBuilder = () => {
                       border: 'none',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      minWidth: '50px'
                     }}
                   >
                     Apply
@@ -1111,9 +1124,9 @@ const CharacterBuilder = () => {
               </div>
               
               {/* Path XP - Readonly with Transfer */}
-              <div>
+              <div className="xp-input-container">
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Path XP:
+                  Path XP: <small style={{ fontWeight: 'normal', color: '#6c757d' }}>(3 Banked XP → 2 Path XP)</small>
                 </label>
                 <input
                   type="number"
@@ -1123,25 +1136,25 @@ const CharacterBuilder = () => {
                     padding: '8px', 
                     borderRadius: '4px', 
                     border: '1px solid #ccc',
-                    width: '100px',
+                    width: '100%',
                     background: '#f8f9fa',
-                    color: '#6c757d'
+                    color: '#6c757d',
+                    boxSizing: 'border-box'
                   }}
                 />
                 {/* Transfer to Path */}
-                <div style={{ marginTop: '10px' }}>
+                <div className="xp-transfer-container" style={{ marginTop: '10px' }}>
                   <input
                     type="number"
                     min="1"
-                    placeholder="Transfer"
+                    placeholder="Banked XP to convert"
                     value={toPathAmount}
                     onChange={(e) => setToPathAmount(e.target.value)}
                     style={{ 
                       padding: '6px', 
                       borderRadius: '4px', 
                       border: '1px solid #ccc',
-                      width: '80px',
-                      marginRight: '5px'
+                      flex: 1
                     }}
                   />
                   <button
@@ -1154,12 +1167,23 @@ const CharacterBuilder = () => {
                       border: 'none',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      minWidth: '50px'
                     }}
                   >
                     Apply
                   </button>
                 </div>
+                {toPathAmount > 0 && (
+                  <small style={{ color: '#6c757d', marginTop: '5px', display: 'block' }}>
+                    Will receive {Math.floor((parseInt(toPathAmount || 0) * 2) / 3)} Path XP
+                  </small>
+                )}
+                {toPathAmount > 0 && parseInt(toPathAmount) % 3 !== 0 && (
+                  <small style={{ color: '#dc3545', marginTop: '2px', display: 'block', fontWeight: 'bold' }}>
+                    ⚠️ Warning: {parseInt(toPathAmount) % 3} Banked XP will be wasted. Use {Math.floor(parseInt(toPathAmount) / 3) * 3} or {Math.ceil(parseInt(toPathAmount) / 3) * 3} for efficient conversion.
+                  </small>
+                )}
               </div>
             </div>
 
@@ -1167,9 +1191,7 @@ const CharacterBuilder = () => {
             {xpLog.length > 0 && (
               <div style={{ marginTop: '20px' }}>
                 <h5>XP Transaction Log</h5>
-                <div style={{ 
-                  maxHeight: '150px', 
-                  overflowY: 'auto', 
+                <div className="scrollable-content" style={{ 
                   background: '#f8f9fa', 
                   padding: '10px', 
                   borderRadius: '4px',
@@ -1178,7 +1200,8 @@ const CharacterBuilder = () => {
                   {xpLog.map((entry, index) => (
                     <div key={index} style={{ 
                       marginBottom: '5px',
-                      color: entry.amount > 0 ? '#28a745' : '#dc3545'
+                      color: entry.amount > 0 ? '#28a745' : '#dc3545',
+                      wordBreak: 'break-word'
                     }}>
                       <strong>{entry.timestamp}:</strong> {entry.description} ({entry.amount > 0 ? '+' : ''}{entry.amount} XP)
                     </div>
@@ -1191,7 +1214,7 @@ const CharacterBuilder = () => {
           {/* Character Stats Summary */}
           <div style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '4px' }}>
             <h4>Character Summary</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="responsive-grid responsive-grid-2">
               <p><strong>Total XP:</strong> {editingCharacter.bankedXP + editingCharacter.loadoutXP + editingCharacter.pathXP}</p>
               <p><strong>Created:</strong> {new Date(editingCharacter.createdAt).toLocaleDateString()}</p>
               <p><strong>Last Saved:</strong> {currentCharacter ? new Date(currentCharacter.lastSaved).toLocaleString() : 'Never'}</p>
@@ -1215,27 +1238,8 @@ const CharacterBuilder = () => {
       
       {/* Path Selection Modal */}
       {showPathSelection && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '8px',
-            maxWidth: '500px',
-            width: '90%',
-            maxHeight: '80vh',
-            overflowY: 'auto'
-          }}>
+        <div className="mobile-modal">
+          <div className="mobile-modal-content">
             <h3>Choose Your Specialization Path</h3>
             <p>At rank 3, you must choose a specialization path that will define your character's unique abilities and bonuses.</p>
             
@@ -1271,15 +1275,12 @@ const CharacterBuilder = () => {
               ))}
             </div>
             
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div className="mobile-button-row" style={{ justifyContent: 'flex-end', marginTop: '20px' }}>
               <button
                 onClick={cancelPathSelection}
+                className="button"
                 style={{
-                  padding: '10px 20px',
-                  background: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px'
+                  background: '#6c757d'
                 }}
               >
                 Cancel
@@ -1287,12 +1288,9 @@ const CharacterBuilder = () => {
               <button
                 onClick={selectPath}
                 disabled={!selectedPath}
+                className="button"
                 style={{
-                  padding: '10px 20px',
                   background: selectedPath ? '#28a745' : '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
                   opacity: selectedPath ? 1 : 0.6
                 }}
               >

@@ -96,3 +96,435 @@
 .button:hover {
   background-color: #0056b3;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .nav-menu a {
+    padding: 12px 15px;
+    text-align: center;
+  }
+
+  .card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .button {
+    padding: 12px 16px;
+    font-size: 14px;
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  /* Button groups for mobile */
+  .mobile-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-button-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mobile-button-row .button {
+    flex: 1;
+    width: auto;
+    margin-bottom: 0;
+  }
+
+  /* Form improvements */
+  input, textarea, select {
+    width: 100% !important;
+    box-sizing: border-box;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Grid layouts responsive */
+  .responsive-grid {
+    display: grid;
+    gap: 15px;
+  }
+
+  .responsive-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .responsive-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack rank-path grid on mobile */
+  .rank-path-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .rank-path-section .button {
+    max-width: none;
+  }
+
+  /* Hamburger menu styles */
+  .character-menu {
+    position: relative;
+  }
+
+  .hamburger-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .character-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .character-option {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .character-option:hover {
+    background: #f8f9fa;
+  }
+
+  .character-option.active {
+    background: #e3f2fd;
+    font-weight: bold;
+  }
+
+  .character-option:last-child {
+    border-bottom: none;
+  }
+
+  /* Header hamburger menu styles */
+  .header-character-menu {
+    position: relative;
+  }
+
+  .header-hamburger-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: background-color 0.2s;
+  }
+
+  .header-hamburger-button:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+
+  .header-character-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+    color: black;
+  }
+
+  .header-title-text {
+    display: inline;
+  }
+
+  /* Hide tagline on mobile */
+  .header-tagline {
+    display: none;
+  }
+
+  /* Hide character selection card on mobile */
+  .character-selection-card {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 769px) {
+  .responsive-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .responsive-grid-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .mobile-button-group {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .mobile-button-group .button {
+    width: auto;
+    margin-bottom: 0;
+    min-width: 120px;
+  }
+
+  .mobile-button-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .mobile-button-row .button {
+    width: auto;
+    margin-bottom: 0;
+    min-width: 100px;
+  }
+
+  /* Limit XP input widths on desktop */
+  .xp-input-container input[type="number"] {
+    max-width: 120px;
+  }
+
+  .xp-transfer-container {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .xp-transfer-container input {
+    max-width: 80px;
+  }
+
+  /* Limit button widths on desktop */
+  .rank-path-section .button {
+    max-width: 200px;
+  }
+
+  /* Ensure proper two-column layout on desktop */
+  .rank-path-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* Hide hamburger menu on desktop */
+  .hamburger-button {
+    display: none;
+  }
+
+  .header-hamburger-button {
+    display: none;
+  }
+
+  .character-list-desktop {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Show character selection card on desktop */
+  .character-selection-card {
+    display: block;
+  }
+
+  /* Show tagline on desktop */
+  .header-tagline {
+    display: block;
+  }
+
+  .header-title-text {
+    display: inline;
+  }
+
+  /* Icon buttons */
+  .icon-button {
+    min-width: 40px;
+    padding: 8px;
+    font-size: 16px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .button {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+  }
+
+  .nav-menu a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Modal improvements for mobile */
+.mobile-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.mobile-modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: calc(100vh - 20px);
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .mobile-modal {
+    align-items: flex-start;
+    padding: 5px;
+  }
+
+  .mobile-modal-content {
+    padding: 15px;
+    margin-top: 5px;
+    max-height: calc(100vh - 10px);
+  }
+}
+
+  /* Scrollable content improvements */
+.scrollable-content {
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .scrollable-content {
+    max-height: 150px;
+  }
+}
+
+/* Ship selector mobile improvements */
+.ship-details {
+  background: #f8f9fa;
+  padding: 20px;
+  borderRadius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+  .ship-details {
+    padding: 15px;
+  }
+
+  .ship-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .ship-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .upgrade-slot-container {
+    margin-bottom: 20px;
+  }
+
+  .upgrade-slot-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .upgrade-details {
+    font-size: 11px;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ship-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .upgrade-slot-header {
+    gap: 5px;
+  }
+}
