@@ -2871,7 +2871,7 @@
       "name": "Maneuver-Assist MGK300",
       "minimum_in": 0,
       "cpp_cost": 2,
-      "restrictions": "[J]",
+      "restrictions": "[s:J]",
       "card_text": "Adds [a],[r>a] actions, Reduce the difficulty of your 3[8], 3[7] and 3[9] maneuvers."
     },
 {
@@ -2880,7 +2880,7 @@
       "name": "Os-1 Arsenal Loadout",
       "minimum_in": 0,
       "cpp_cost": 0,
-      "restrictions": "[&]",
+      "restrictions": "[s:&]",
       "card_text": "Adds [P] [M] While you have exactly 1 disarm token, you can still perform [P] and [M] attacks against targets you have locked. If you do, you cannot spend your lock during the attack."
     },
 {
@@ -2889,7 +2889,7 @@
       "name": "Sensitive Controls",
       "minimum_in": 0,
       "cpp_cost": 2,
-      "restrictions": "[I]",
+      "restrictions": "[s:I]",
       "card_text": "Replace your Autothrusters ship ability with the following: Sensitive Controls: During the System Phase, you may perform a red [r] or red [b] action."
     },
 {
@@ -2898,7 +2898,7 @@
       "name": "Target-Assist MGK-300",
       "minimum_in": 0,
       "cpp_cost": 3,
-      "restrictions": "[J]",
+      "restrictions": "[s:J]",
       "card_text": "Adds [a],[R>a] actions Before you engage, if you have no green tokens and you are not stressed, gain 1 calculate token for each enemy ship at range 2-3 in your firing arc, to a maximum of 2."
     },
 {
@@ -2907,7 +2907,7 @@
       "name": "TIE Defender Elite",
       "minimum_in": 0,
       "cpp_cost": 2,
-      "restrictions": "[D]",
+      "restrictions": "[s:D]",
       "card_text": "Decrease the difficulty of your turn ([4] or [6]) maneuvers. Increase the difficulty of your Koiogran Turn ([2]) maneuvers. Replace your Full Throttle ship ability with the following: Advance Fire Control: After you perform a [C] or [M] attack, if you have a lock on the defender, you may perform a bonus primary attack against the defender."
     },
 {
@@ -2916,7 +2916,7 @@
       "name": "Xg-1 Assault Configuration",
       "minimum_in": 0,
       "cpp_cost": 0,
-      "restrictions": "[&]",
+      "restrictions": "[s:&]",
       "card_text": "Adds [C] While you have exactly 1 disarm token, you can still perform [C] attacks. While you perform a [C] attack while disarmed, roll a maximum of 3 attack dice."
     }
   ],

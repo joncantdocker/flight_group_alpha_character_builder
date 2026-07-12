@@ -51,12 +51,10 @@ class PathUpgradesService {
     for (let rank = 1; rank <= character.rank; rank++) {
       const levelData = pathData[rank.toString()];
       if (levelData) {
-        // Add slots (avoiding duplicates)
+        // Add slots and preserve duplicates (some pilots gain multiple of the same slot)
         if (levelData.slots) {
           levelData.slots.forEach(slot => {
-            if (!bonuses.slots.includes(slot)) {
-              bonuses.slots.push(slot);
-            }
+            bonuses.slots.push(slot);
           });
         }
         

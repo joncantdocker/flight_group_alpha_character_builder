@@ -5,76 +5,70 @@ import upgradeService from '../services/upgradeService';
 import pathUpgradesService from '../services/pathUpgradesService';
 import apiService from '../services/apiService';
 
-// Add CSS for X-Wing fonts in dropdowns
-const xwingFontStyle = {
-  fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
-  fontWeight: 'normal',
-  fontStyle: 'normal'
+const getXWingFontFamily = (fontSet) => {
+  return fontSet === 'ships'
+    ? 'X-Wing-Ships, Arial, sans-serif'
+    : 'X-Wing-Symbols, Arial, sans-serif';
 };
 
-const xwingRedFontStyle = {
-  fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
-  color: '#dc3545',
-  fontWeight: 'normal',
-  fontStyle: 'normal'
+// Token syntax:
+// [symbol]       -> symbols font (default)
+// [r:symbol]     -> symbols font in red
+// [s:symbol]     -> ships font
+// [r:s:symbol]   -> ships font in red
+// [x:symbol]     -> explicitly symbols font
+const renderXWingMarkup = (text) => {
+  if (!text) return null;
+
+  const parts = text.split(/(\[[^\]]+\])/);
+
+  return parts.map((part, index) => {
+    if (!(part.startsWith('[') && part.endsWith(']'))) {
+      return part;
+    }
+
+    const token = part.substring(1, part.length - 1);
+    const segments = token.split(':');
+
+    let isRed = false;
+    let fontSet = 'symbols';
+    let startIndex = 0;
+
+    if (segments[startIndex] === 'r') {
+      isRed = true;
+      startIndex += 1;
+    }
+
+    if (segments[startIndex] === 's') {
+      fontSet = 'ships';
+      startIndex += 1;
+    } else if (segments[startIndex] === 'x') {
+      fontSet = 'symbols';
+      startIndex += 1;
+    }
+
+    const symbol = segments.slice(startIndex).join(':');
+
+    return (
+      <span
+        key={`token-${index}`}
+        style={{
+          fontFamily: getXWingFontFamily(fontSet),
+          color: isRed ? '#dc3545' : undefined,
+          fontWeight: 'normal',
+          fontStyle: 'normal'
+        }}
+      >
+        {symbol}
+      </span>
+    );
+  });
 };
 
 // Utility function to parse X-Wing special formatting codes
 const parseXWingText = (text) => {
   if (!text) return text;
-
-  const parts = [];
-  let currentIndex = 0;
-  let partKey = 0;
-
-  // Find all special formatting codes
-  const regex = /\[([^\]]+)\]/g;
-  let match;
-
-  while ((match = regex.exec(text)) !== null) {
-    // Add text before the match
-    if (match.index > currentIndex) {
-      parts.push(text.substring(currentIndex, match.index));
-    }
-
-    const code = match[1];
-
-    // Handle different formatting codes
-    if (code.startsWith('r:')) {
-      // Red colored symbol: [r:l] -> red 'l' in x-wing-symbols font
-      const symbol = code.substring(2);
-      parts.push(
-        <span
-          key={`red-${partKey++}`}
-          style={{
-            fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
-            color: '#dc3545'
-          }}
-        >
-          {symbol}
-        </span>
-      );
-    } else {
-      // Regular symbol: [}] or [MM] -> symbol in x-wing-symbols font
-      parts.push(
-        <span
-          key={`symbol-${partKey++}`}
-          style={{ fontFamily: 'X-Wing-Symbols, Arial, sans-serif' }}
-        >
-          {code}
-        </span>
-      );
-    }
-
-    currentIndex = regex.lastIndex;
-  }
-
-  // Add remaining text
-  if (currentIndex < text.length) {
-    parts.push(text.substring(currentIndex));
-  }
-
-  return parts.length > 1 ? parts : text;
+  return renderXWingMarkup(text);
 };
 
 const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) => {
@@ -428,43 +422,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                   formatOptionLabel={({ label, upgrade, isInvalid }) => {
                     if (!upgrade) return <span>{label}</span>;
 
-                    // Simple X-Wing symbol replacement
-                    const renderRestrictions = (text) => {
-                      if (!text) return null;
-
-                      // Handle [r:symbol] format
-                      if (text.includes('[r:')) {
-                        return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
-                          if (part.startsWith('r:')) {
-                            return (
-                              <span key={index} style={xwingRedFontStyle}>
-                                {part.substring(2)}
-                              </span>
-                            );
-                          } else if (part.match(/[[][^\]]+]/)) {
-                            return (
-                              <span key={index} style={xwingFontStyle}>
-                                {part.replace(/[[]]/g, '')}
-                              </span>
-                            );
-                          }
-                          return part;
-                        });
-                      }
-
-                      // Handle regular [symbol] format
-                      return text.split(/(\[[^\]]+\])/).map((part, index) => {
-                        if (part.startsWith('[') && part.endsWith(']')) {
-                          return (
-                            <span key={index} style={xwingFontStyle}>
-                              {part.substring(1, part.length - 1)}
-                            </span>
-                          );
-                        }
-                        return part;
-                      });
-                    };
-
                     return (
                       <div style={{
                         color: isInvalid ? '#6c757d' : 'inherit',
@@ -474,7 +431,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                         <span>{upgrade.name}</span>
                         <span style={{ color: '#6c757d' }}> ({Number(upgrade.cpp_cost)} XP)</span>
                         {upgrade.restrictions && (
-                          <span style={{ color: '#6c757d' }}> - {renderRestrictions(upgrade.restrictions)}</span>
+                          <span style={{ color: '#6c757d' }}> - {renderXWingMarkup(upgrade.restrictions)}</span>
                         )}
                         {isInvalid ? <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in > 0 ? upgrade.minimum_in : 1}]</span> : null}
                       </div>
@@ -525,37 +482,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                       </div>
                       {selectedUpgrade.restrictions && (
                         <div style={{ marginBottom: '5px' }}>
-                          <strong>Requirements:</strong> {(() => {
-                            const text = selectedUpgrade.restrictions;
-                            if (text.includes('[r:')) {
-                              return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
-                                if (part.startsWith('r:')) {
-                                  return (
-                                    <span key={index} style={xwingRedFontStyle}>
-                                      {part.substring(2)}
-                                    </span>
-                                  );
-                                } else if (part.match(/[[][^\]]+]/)) {
-                                  return (
-                                    <span key={index} style={xwingFontStyle}>
-                                      {part.replace(/[[]]/g, '')}
-                                    </span>
-                                  );
-                                }
-                                return part;
-                              });
-                            }
-                            return text.split(/(\[[^\]]+\])/).map((part, index) => {
-                              if (part.startsWith('[') && part.endsWith(']')) {
-                                return (
-                                  <span key={index} style={xwingFontStyle}>
-                                    {part.substring(1, part.length - 1)}
-                                  </span>
-                                );
-                              }
-                              return part;
-                            });
-                          })()}
+                          <strong>Requirements:</strong> {renderXWingMarkup(selectedUpgrade.restrictions)}
                         </div>
                       )}
                       {selectedUpgrade.minimum_in && Number(selectedUpgrade.minimum_in) > 0 ? (
@@ -904,43 +831,6 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                 formatOptionLabel={({ label, upgrade, isInvalid }) => {
                                   if (!upgrade) return <span>{label}</span>;
 
-                                  // Simple X-Wing symbol replacement
-                                  const renderRestrictions = (text) => {
-                                    if (!text) return null;
-
-                                    // Handle [r:symbol] format
-                                    if (text.includes('[r:')) {
-                                      return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
-                                        if (part.startsWith('r:')) {
-                                          return (
-                                            <span key={index} style={xwingRedFontStyle}>
-                                              {part.substring(2)}
-                                            </span>
-                                          );
-                                        } else if (part.match(/[[][^\]]+]/)) {
-                                          return (
-                                            <span key={index} style={xwingFontStyle}>
-                                              {part.replace(/[[]]/g, '')}
-                                            </span>
-                                          );
-                                        }
-                                        return part;
-                                      });
-                                    }
-
-                                    // Handle regular [symbol] format
-                                    return text.split(/(\[[^\]]+\])/).map((part, index) => {
-                                      if (part.startsWith('[') && part.endsWith(']')) {
-                                        return (
-                                          <span key={index} style={xwingFontStyle}>
-                                            {part.substring(1, part.length - 1)}
-                                          </span>
-                                        );
-                                      }
-                                      return part;
-                                    });
-                                  };
-
                                   return (
                                     <div style={{
                                       color: isInvalid ? '#6c757d' : 'inherit',
@@ -950,7 +840,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                       <span>{upgrade.name}</span>
                                       <span style={{ color: '#6c757d' }}> ({Number(upgrade.cpp_cost)} XP)</span>
                                       {upgrade.restrictions && (
-                                        <span style={{ color: '#6c757d' }}> - {renderRestrictions(upgrade.restrictions)}</span>
+                                        <span style={{ color: '#6c757d' }}> - {renderXWingMarkup(upgrade.restrictions)}</span>
                                       )}
                                       {isInvalid ?
                                         <span style={{ color: '#dc3545' }}> [Requires Init {upgrade.minimum_in > 0 ? upgrade.minimum_in : 1}]</span>
@@ -998,37 +888,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                     </div>
                                     {selectedUpgrade.restrictions && (
                                       <div style={{ marginBottom: '5px' }}>
-                                        <strong>Requirements:</strong> {(() => {
-                                          const text = selectedUpgrade.restrictions;
-                                          if (text.includes('[r:')) {
-                                            return text.split(/\[(r:[^\]]+)\]/).map((part, index) => {
-                                              if (part.startsWith('r:')) {
-                                                return (
-                                                  <span key={index} style={xwingRedFontStyle}>
-                                                    {part.substring(2)}
-                                                  </span>
-                                                );
-                                              } else if (part.match(/[[][^\]]+]/)) {
-                                                return (
-                                                  <span key={index} style={xwingFontStyle}>
-                                                    {part.replace(/[[]]/g, '')}
-                                                  </span>
-                                                );
-                                              }
-                                              return part;
-                                            });
-                                          }
-                                          return text.split(/([[][^\]]+])/).map((part, index) => {
-                                            if (part.startsWith('[') && part.endsWith(']')) {
-                                              return (
-                                                <span key={index} style={xwingFontStyle}>
-                                                  {part.substring(1, part.length - 1)}
-                                                </span>
-                                              );
-                                            }
-                                            return part;
-                                          });
-                                        })()}
+                                        <strong>Requirements:</strong> {renderXWingMarkup(selectedUpgrade.restrictions)}
                                       </div>
                                     )}
                                     {selectedUpgrade.minimum_in && Number(selectedUpgrade.minimum_in) > 0 ? (

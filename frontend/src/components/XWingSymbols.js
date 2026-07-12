@@ -21,13 +21,22 @@ const XWingSymbols = ({ bonuses }) => {
     );
   };
 
+  const wrappedSymbolsStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2px 6px',
+    overflowWrap: 'anywhere',
+    wordBreak: 'break-word'
+  };
+
   return (
     <table style={{ 
       fontSize: '14px', 
       lineHeight: '1.5', 
       width: '100%', 
       borderCollapse: 'collapse',
-      marginTop: '10px'
+      marginTop: '10px',
+      tableLayout: 'fixed'
     }}>
       <tbody>
         {bonusElements.map((element, index) => {
@@ -48,15 +57,17 @@ const XWingSymbols = ({ bonuses }) => {
               </td>
               <td style={{ 
                 padding: '8px 12px', 
-                verticalAlign: 'top'
+                verticalAlign: 'top',
+                overflowWrap: 'anywhere',
+                wordBreak: 'break-word'
               }}>
                 {element.type === 'slots' && (
-                  <div>
+                  <div style={wrappedSymbolsStyle}>
                     {element.items.map((item, i) => renderSymbol(item.text, item.isRed))}
                   </div>
                 )}
                 {element.type === 'actions' && (
-                  <div>
+                  <div style={wrappedSymbolsStyle}>
                     {element.items.map((item, i) => renderSymbol(item.text, item.isRed))}
                   </div>
                 )}
