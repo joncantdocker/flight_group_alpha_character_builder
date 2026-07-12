@@ -162,13 +162,27 @@ const CharacterBuilder = () => {
   const updateCharacterField = (field, value) => {
     if (!editingCharacter) return;
     
-    // Only allow callsign updates directly, XP is handled by transfer functions
+    // Allow callsign and direct Banked XP edits.
     if (field === 'callsign') {
       const updatedChar = {
         ...editingCharacter,
         [field]: value
       };
       
+      setEditingCharacter(updatedChar);
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    if (field === 'bankedXP') {
+      const numericValue = Number(value);
+      if (Number.isNaN(numericValue)) return;
+
+      const updatedChar = {
+        ...editingCharacter,
+        bankedXP: Math.max(0, Math.floor(numericValue))
+      };
+
       setEditingCharacter(updatedChar);
       setHasUnsavedChanges(true);
     }
@@ -194,16 +208,28 @@ const CharacterBuilder = () => {
   };
 
   const addBankedXP = () => {
-    if (!editingCharacter || !addBankedAmount || addBankedAmount <= 0) return;
+    if (!editingCharacter || addBankedAmount === '' || Number(addBankedAmount) === 0) return;
+
+    const amount = parseInt(addBankedAmount, 10);
+    if (Number.isNaN(amount)) return;
+
+    // Keep banked XP from dropping below zero.
+    const nextBankedXP = Math.max(0, editingCharacter.bankedXP + amount);
+    const appliedAmount = nextBankedXP - editingCharacter.bankedXP;
+    if (appliedAmount === 0) return;
     
     const updatedChar = {
       ...editingCharacter,
-      bankedXP: editingCharacter.bankedXP + parseInt(addBankedAmount)
+      bankedXP: nextBankedXP
     };
     
     setEditingCharacter(updatedChar);
     setHasUnsavedChanges(true);
-    addXpToLog('add', addBankedAmount, 'Added to Banked XP');
+    addXpToLog(
+      'adjust',
+      appliedAmount,
+      appliedAmount > 0 ? 'Adjusted Banked XP (+)' : 'Adjusted Banked XP (-)'
+    );
     setAddBankedAmount(0);
   };
 
@@ -1003,8 +1029,7 @@ const CharacterBuilder = () => {
                 <div className="xp-transfer-container" style={{ marginTop: '10px' }}>
                   <input
                     type="number"
-                    min="1"
-                    placeholder="Add XP"
+                    placeholder="Adjust XP (+/-)"
                     value={addBankedAmount}
                     onChange={(e) => setAddBankedAmount(e.target.value)}
                     style={{ 
@@ -1016,7 +1041,7 @@ const CharacterBuilder = () => {
                   />
                   <button
                     onClick={addBankedXP}
-                    disabled={!addBankedAmount || addBankedAmount <= 0}
+                    disabled={addBankedAmount === '' || Number(addBankedAmount) === 0}
                     style={{
                       padding: '6px 8px',
                       background: '#007bff',
@@ -1028,7 +1053,7 @@ const CharacterBuilder = () => {
                       minWidth: '50px'
                     }}
                   >
-                    Add
+                    Apply
                   </button>
                 </div>
               </div>
