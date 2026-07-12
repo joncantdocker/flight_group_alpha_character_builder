@@ -2,6 +2,7 @@
 class UpgradeService {
   constructor() {
     this.upgradeData = null;
+    this.upgradeIndexes = null;
     this.loadUpgradeData();
   }
 
@@ -9,34 +10,108 @@ class UpgradeService {
     try {
       const response = await fetch('./upgrades.json');
       this.upgradeData = await response.json();
+      this.upgradeIndexes = null;
     } catch (error) {
       console.error('Failed to load upgrade data:', error);
       this.upgradeData = {};
+      this.upgradeIndexes = null;
     }
+  }
+
+  getUpgradeIndexes() {
+    if (!this.upgradeData) {
+      return {
+        allUpgrades: [],
+        nameCounts: new Map(),
+        byId: new Map(),
+        byName: new Map(),
+        bySelectionValue: new Map()
+      };
+    }
+
+    if (this.upgradeIndexes) {
+      return this.upgradeIndexes;
+    }
+
+    const allUpgrades = [];
+    const nameCounts = new Map();
+    const byId = new Map();
+    const byName = new Map();
+
+    Object.entries(this.upgradeData).forEach(([categoryKey, upgrades]) => {
+      if (Array.isArray(upgrades)) {
+        upgrades.forEach((upgrade, index) => {
+          const normalizedUpgrade = {
+            ...upgrade,
+            categoryKey,
+            upgradeId: this.createUpgradeId(categoryKey, upgrade, index)
+          };
+
+          allUpgrades.push(normalizedUpgrade);
+          byId.set(normalizedUpgrade.upgradeId, normalizedUpgrade);
+          if (!byName.has(normalizedUpgrade.name)) {
+            byName.set(normalizedUpgrade.name, normalizedUpgrade);
+          }
+          nameCounts.set(
+            normalizedUpgrade.name,
+            (nameCounts.get(normalizedUpgrade.name) || 0) + 1
+          );
+        });
+      }
+    });
+
+    const bySelectionValue = new Map();
+    allUpgrades.forEach((upgrade) => {
+      const selectionValue = nameCounts.get(upgrade.name) > 1
+        ? upgrade.upgradeId
+        : upgrade.name;
+      bySelectionValue.set(selectionValue, upgrade);
+    });
+
+    this.upgradeIndexes = {
+      allUpgrades,
+      nameCounts,
+      byId,
+      byName,
+      bySelectionValue
+    };
+
+    return this.upgradeIndexes;
   }
 
   // Get all upgrades flattened into a single array with category info
   getAllUpgrades() {
-    if (!this.upgradeData) return [];
-    
-    const allUpgrades = [];
-    Object.entries(this.upgradeData).forEach(([categoryKey, upgrades]) => {
-      if (Array.isArray(upgrades)) {
-        upgrades.forEach(upgrade => {
-          allUpgrades.push({
-            ...upgrade,
-            categoryKey
-          });
-        });
-      }
-    });
-    
-    return allUpgrades;
+    return this.getUpgradeIndexes().allUpgrades;
+  }
+
+  createUpgradeId(categoryKey, upgrade, index) {
+    return `${categoryKey}::${index}::${upgrade.code || ''}::${upgrade.name || ''}`;
   }
 
   // Get upgrades by category
   getUpgradesByCategory(categoryKey) {
-    return this.upgradeData ? this.upgradeData[categoryKey] || [] : [];
+    if (!this.upgradeData) return [];
+    const upgrades = this.upgradeData[categoryKey] || [];
+    return upgrades.map((upgrade, index) => ({
+      ...upgrade,
+      categoryKey,
+      upgradeId: this.createUpgradeId(categoryKey, upgrade, index)
+    }));
+  }
+
+  hasDuplicateUpgradeName(name) {
+    if (!name) return false;
+    const { nameCounts } = this.getUpgradeIndexes();
+    return (nameCounts.get(name) || 0) > 1;
+  }
+
+  // Use unique IDs only when a name is duplicated to preserve old selections for unique upgrades.
+  getUpgradeSelectionValue(upgrade) {
+    if (!upgrade) return '';
+    if (this.hasDuplicateUpgradeName(upgrade.name)) {
+      return upgrade.upgradeId;
+    }
+    return upgrade.name;
   }
 
   // Get upgrades filtered by upgrade slot code
@@ -83,8 +158,16 @@ class UpgradeService {
 
   // Get upgrade by name
   getUpgradeByName(name) {
-    const allUpgrades = this.getAllUpgrades();
-    return allUpgrades.find(upgrade => upgrade.name === name);
+    const { byId, bySelectionValue, byName } = this.getUpgradeIndexes();
+
+    // Prefer exact unique IDs when present.
+    if (byId.has(name)) return byId.get(name);
+
+    // Support stored selection values used by the dropdown.
+    if (bySelectionValue.has(name)) return bySelectionValue.get(name);
+
+    // Backward compatibility for older saved data that stores plain names.
+    return byName.get(name);
   }
 
   // Get formatted slot name for display

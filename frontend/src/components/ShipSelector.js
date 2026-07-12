@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Select from 'react-select';
 import shipService from '../services/shipService';
 import upgradeService from '../services/upgradeService';
@@ -78,6 +78,16 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
   const [currentCharacter, setCurrentCharacter] = useState(null);
   const [characterBonuses, setCharacterBonuses] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const editingShipSelectionRef = useRef(null);
+  const hasUnsavedChangesRef = useRef(false);
+
+  useEffect(() => {
+    editingShipSelectionRef.current = editingShipSelection;
+  }, [editingShipSelection]);
+
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     const loadShips = async () => {
@@ -127,48 +137,36 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
     }
   }, [editingCharacter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Save current ship selection
-  const saveShipSelection = useCallback(async () => {
-    if (!editingShipSelection || !hasUnsavedChanges) return;
+  // Save current ship selection.
+  // force=true is used by the Character save button to ensure latest ship state is applied.
+  const saveShipSelection = useCallback(async ({ force = false } = {}) => {
+    const latestSelection = editingShipSelectionRef.current;
+    const hasChanges = hasUnsavedChangesRef.current;
+
+    if (!latestSelection || (!hasChanges && !force)) return false;
 
     try {
       apiService.setCurrentShipSelection(
-        editingShipSelection.shipKey,
-        editingShipSelection.selectedUpgrades,
-        editingShipSelection.selectedRankUpgrades
+        latestSelection.shipKey,
+        latestSelection.selectedUpgrades,
+        latestSelection.selectedRankUpgrades
       );
 
-      setCurrentShipSelection({ ...editingShipSelection });
+      setCurrentShipSelection({ ...latestSelection });
       setHasUnsavedChanges(false);
+      return true;
     } catch (err) {
       console.error('Error saving ship selection:', err);
+      return false;
     }
-  }, [editingShipSelection, hasUnsavedChanges]);
-
-  // Force save current ship selection (for Save All functionality)
-  const forceSaveShipSelection = useCallback(async () => {
-    if (!editingShipSelection) return;
-
-    try {
-      apiService.setCurrentShipSelection(
-        editingShipSelection.shipKey,
-        editingShipSelection.selectedUpgrades,
-        editingShipSelection.selectedRankUpgrades
-      );
-
-      setCurrentShipSelection({ ...editingShipSelection });
-      setHasUnsavedChanges(false);
-    } catch (err) {
-      console.error('Error force saving ship selection:', err);
-    }
-  }, [editingShipSelection]);
+  }, []);
 
   // Expose saveShipSelection function to parent component
   useEffect(() => {
     if (onSaveShipSelection) {
-      onSaveShipSelection(forceSaveShipSelection);
+      onSaveShipSelection(async () => saveShipSelection({ force: true }));
     }
-  }, [onSaveShipSelection, forceSaveShipSelection]);
+  }, [onSaveShipSelection, saveShipSelection]);
 
   // Handle page refresh/close warnings
   useEffect(() => {
@@ -355,6 +353,12 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
     }
   };
 
+  const getUpgradeDisplayName = (selectionValue) => {
+    if (!selectionValue) return '';
+    const upgrade = upgradeService.getUpgradeByName(selectionValue);
+    return upgrade ? upgrade.name : selectionValue;
+  };
+
   const renderUpgradeSlots = (upgradeString) => {
     const slots = shipService.formatUpgradeSlots(upgradeString);
 
@@ -373,14 +377,17 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
 
           // Filter upgrades based on compound slot availability
           const selectableUpgrades = availableUpgrades.filter(upgrade => {
-            if (editingShipSelection?.selectedUpgrades[index] === upgrade.name) {
+            const selectedValue = editingShipSelection?.selectedUpgrades[index];
+            const optionValue = upgradeService.getUpgradeSelectionValue(upgrade);
+
+            if (selectedValue === optionValue || selectedValue === upgrade.name) {
               return true; // Always show currently selected upgrade
             }
             return upgradeService.canSelectCompoundUpgrade(
               slots,
               editingShipSelection?.selectedUpgrades || {},
               index,
-              upgrade.name
+              optionValue
             );
           });
 
@@ -403,7 +410,10 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                 </span>
                 <Select
                   value={editingShipSelection?.selectedUpgrades[index] ?
-                    { value: editingShipSelection.selectedUpgrades[index], label: editingShipSelection.selectedUpgrades[index] } :
+                    {
+                      value: editingShipSelection.selectedUpgrades[index],
+                      label: getUpgradeDisplayName(editingShipSelection.selectedUpgrades[index])
+                    } :
                     null
                   }
                   onChange={(selectedOption) => handleUpgradeSelection(index, selectedOption ? selectedOption.value : '')}
@@ -412,7 +422,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                     ...selectableUpgrades.map((upgrade) => {
                       const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
                       return {
-                        value: upgrade.name,
+                        value: upgradeService.getUpgradeSelectionValue(upgrade),
                         label: upgrade.name,
                         upgrade: upgrade,
                         isInvalid: isInvalid
@@ -681,7 +691,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                     const isPath = upgradeService.isPathUpgrade(upgrade);
                     return (
                       <div key={`ship-${index}`} style={{ color: '#6c757d', wordBreak: 'break-word' }}>
-                        • {upgradeName} ({upgrade?.cpp_cost || 0} XP) - Ship {isPath ? '(Path)' : '(Loadout)'}
+                        • {upgrade?.name || upgradeName} ({upgrade?.cpp_cost || 0} XP) - Ship {isPath ? '(Path)' : '(Loadout)'}
                       </div>
                     );
                   })}
@@ -694,7 +704,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                     const isPath = upgradeService.isPathUpgrade(upgrade);
                     return (
                       <div key={`rank-${index}`} style={{ color: '#6c757d', wordBreak: 'break-word' }}>
-                        • {upgradeName} ({upgrade?.cpp_cost || 0} XP) - Rank {isPath ? '(Path)' : '(Loadout)'}
+                        • {upgrade?.name || upgradeName} ({upgrade?.cpp_cost || 0} XP) - Rank {isPath ? '(Path)' : '(Loadout)'}
                       </div>
                     );
                   })}
@@ -812,7 +822,10 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
 
                               <Select
                                 value={editingShipSelection?.selectedRankUpgrades[slotIndex] ?
-                                  { value: editingShipSelection.selectedRankUpgrades[slotIndex], label: editingShipSelection.selectedRankUpgrades[slotIndex] } :
+                                  {
+                                    value: editingShipSelection.selectedRankUpgrades[slotIndex],
+                                    label: getUpgradeDisplayName(editingShipSelection.selectedRankUpgrades[slotIndex])
+                                  } :
                                   null
                                 }
                                 onChange={(selectedOption) => handleRankUpgradeSelection(slotIndex, selectedOption ? selectedOption.value : '')}
@@ -821,7 +834,7 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                                   ...availableUpgrades.map((upgrade) => {
                                     const isInvalid = upgrade.minimum_in && characterInitiative < upgrade.minimum_in;
                                     return {
-                                      value: upgrade.name,
+                                      value: upgradeService.getUpgradeSelectionValue(upgrade),
                                       label: upgrade.name,
                                       upgrade: upgrade,
                                       isInvalid: isInvalid
