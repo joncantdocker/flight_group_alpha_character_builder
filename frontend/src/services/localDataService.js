@@ -189,7 +189,7 @@ class LocalDataService {
     return selection ? JSON.parse(selection) : null;
   }
 
-  setCurrentShipSelection(shipKey, selectedUpgrades = {}, selectedRankUpgrades = {}) {
+  setCurrentShipSelection(shipKey, selectedUpgrades = {}, selectedRankUpgrades = {}, customUpgradeSlots = []) {
     const currentCharacterId = this.getCurrentCharacterId();
     if (!currentCharacterId) return null;
     
@@ -197,6 +197,7 @@ class LocalDataService {
       shipKey,
       selectedUpgrades,
       selectedRankUpgrades,
+      customUpgradeSlots,
       timestamp: new Date().toISOString()
     };
     const shipSelectionKey = `${this.shipSelectionKey}_${currentCharacterId}`;

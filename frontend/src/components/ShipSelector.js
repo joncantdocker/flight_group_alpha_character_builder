@@ -71,6 +71,10 @@ const parseXWingText = (text) => {
   return renderXWingMarkup(text);
 };
 
+const customSlotTypeCodes = [
+  'E', 'M', 'P', 'S', 'C', 'B', 'W', 'Y', 'F', 'X', 'I', 'n', 'V', 'A', 'U', 'm', 'x', 'y'
+];
+
 const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) => {
   const [ships, setShips] = useState([]);
   const [currentShipSelection, setCurrentShipSelection] = useState(null);
@@ -149,7 +153,8 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
       apiService.setCurrentShipSelection(
         latestSelection.shipKey,
         latestSelection.selectedUpgrades,
-        latestSelection.selectedRankUpgrades
+        latestSelection.selectedRankUpgrades,
+        latestSelection.customUpgradeSlots || []
       );
 
       setCurrentShipSelection({ ...latestSelection });
@@ -195,7 +200,8 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
         shipKey: savedSelection.shipKey,
         selectedShip: ship ? { key: savedSelection.shipKey, ...ship } : null,
         selectedUpgrades: savedSelection.selectedUpgrades || {},
-        selectedRankUpgrades: savedSelection.selectedRankUpgrades || {}
+        selectedRankUpgrades: savedSelection.selectedRankUpgrades || {},
+        customUpgradeSlots: savedSelection.customUpgradeSlots || []
       };
       setCurrentShipSelection(selectionData);
       setEditingShipSelection({ ...selectionData }); // Create copy for editing
@@ -273,7 +279,8 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
         shipKey,
         selectedShip: ship ? { key: shipKey, ...ship } : null,
         selectedUpgrades: {},
-        selectedRankUpgrades: preservedRankUpgrades
+        selectedRankUpgrades: preservedRankUpgrades,
+        customUpgradeSlots: []
       };
       setEditingShipSelection(newSelection);
       setHasUnsavedChanges(false);
@@ -329,18 +336,130 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
     setHasUnsavedChanges(true);
   };
 
+  const getCustomUpgradeKey = (slotId) => `custom_${slotId}`;
+
+  const addCustomUpgradeSlot = () => {
+    if (!editingShipSelection) return;
+
+    const newSlot = {
+      id: Date.now().toString(),
+      slotType: 'E',
+      isFree: false
+    };
+
+    setEditingShipSelection(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        customUpgradeSlots: [...(prev.customUpgradeSlots || []), newSlot]
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const updateCustomUpgradeSlot = (slotId, updates) => {
+    if (!editingShipSelection) return;
+
+    setEditingShipSelection(prev => {
+      if (!prev) return prev;
+      const currentSlots = prev.customUpgradeSlots || [];
+      const updatedSlots = currentSlots.map(slot =>
+        slot.id === slotId ? { ...slot, ...updates } : slot
+      );
+
+      return {
+        ...prev,
+        customUpgradeSlots: updatedSlots
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const removeCustomUpgradeSlot = (slotId) => {
+    if (!editingShipSelection) return;
+
+    setEditingShipSelection(prev => {
+      if (!prev) return prev;
+      const currentSlots = prev.customUpgradeSlots || [];
+      const updatedSlots = currentSlots.filter(slot => slot.id !== slotId);
+      const slotKey = getCustomUpgradeKey(slotId);
+      const updatedSelectedUpgrades = { ...prev.selectedUpgrades };
+      delete updatedSelectedUpgrades[slotKey];
+
+      return {
+        ...prev,
+        customUpgradeSlots: updatedSlots,
+        selectedUpgrades: updatedSelectedUpgrades
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleCustomUpgradeSelection = (slotId, upgradeName) => {
+    if (!editingShipSelection) return;
+
+    setEditingShipSelection(prev => {
+      if (!prev) return prev;
+      const slotKey = getCustomUpgradeKey(slotId);
+      const updatedSelectedUpgrades = {
+        ...prev.selectedUpgrades,
+        [slotKey]: upgradeName
+      };
+
+      return {
+        ...prev,
+        selectedUpgrades: updatedSelectedUpgrades
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const getCustomSlotByUpgradeKey = (slotKey) => {
+    if (!editingShipSelection || !slotKey) return null;
+    const customSlots = editingShipSelection.customUpgradeSlots || [];
+    return customSlots.find(slot => getCustomUpgradeKey(slot.id) === String(slotKey)) || null;
+  };
+
+  const getFreeCustomCosts = () => {
+    if (!editingShipSelection) return { pathCost: 0, loadoutCost: 0 };
+
+    const customSlots = editingShipSelection.customUpgradeSlots || [];
+    let pathCost = 0;
+    let loadoutCost = 0;
+
+    customSlots.forEach((slot) => {
+      if (!slot.isFree) return;
+
+      const selectedUpgradeKey = editingShipSelection.selectedUpgrades[getCustomUpgradeKey(slot.id)];
+      if (!selectedUpgradeKey) return;
+
+      const upgrade = upgradeService.getUpgradeByName(selectedUpgradeKey);
+      if (!upgrade || !upgrade.cpp_cost) return;
+
+      if (upgradeService.isPathUpgrade(upgrade)) {
+        pathCost += upgrade.cpp_cost;
+      } else {
+        loadoutCost += upgrade.cpp_cost;
+      }
+    });
+
+    return { pathCost, loadoutCost };
+  };
+
   const calculateTotalLoadoutCost = () => {
     if (!editingShipSelection) return 0;
     const shipUpgradeCosts = upgradeService.calculateSplitCosts(editingShipSelection.selectedUpgrades);
     const rankUpgradeCosts = upgradeService.calculateSplitCosts(editingShipSelection.selectedRankUpgrades);
-    return shipUpgradeCosts.loadoutCost + rankUpgradeCosts.loadoutCost;
+    const freeCustomCosts = getFreeCustomCosts();
+    return shipUpgradeCosts.loadoutCost + rankUpgradeCosts.loadoutCost - freeCustomCosts.loadoutCost;
   };
 
   const calculateTotalPathCost = () => {
     if (!editingShipSelection) return 0;
     const shipUpgradeCosts = upgradeService.calculateSplitCosts(editingShipSelection.selectedUpgrades);
     const rankUpgradeCosts = upgradeService.calculateSplitCosts(editingShipSelection.selectedRankUpgrades);
-    return shipUpgradeCosts.pathCost + rankUpgradeCosts.pathCost;
+    const freeCustomCosts = getFreeCustomCosts();
+    return shipUpgradeCosts.pathCost + rankUpgradeCosts.pathCost - freeCustomCosts.pathCost;
   };
 
   const discardChanges = () => {
@@ -689,9 +808,10 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                   .map(([slotIndex, upgradeName], index) => {
                     const upgrade = upgradeService.getUpgradeByName(upgradeName);
                     const isPath = upgradeService.isPathUpgrade(upgrade);
+                    const customSlot = getCustomSlotByUpgradeKey(slotIndex);
                     return (
                       <div key={`ship-${index}`} style={{ color: '#6c757d', wordBreak: 'break-word' }}>
-                        • {upgrade?.name || upgradeName} ({upgrade?.cpp_cost || 0} XP) - Ship {isPath ? '(Path)' : '(Loadout)'}
+                        • {upgrade?.name || upgradeName} ({customSlot?.isFree ? 0 : (upgrade?.cpp_cost || 0)} XP) - {customSlot ? 'Custom Slot' : 'Ship'} {isPath ? '(Path)' : '(Loadout)'}{customSlot?.isFree ? ' [Free]' : ''}
                       </div>
                     );
                   })}
@@ -941,6 +1061,135 @@ const ShipSelector = ({ editingCharacter = null, onSaveShipSelection = null }) =
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Custom Upgrade Slots */}
+          <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #dee2e6' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '10px', flexWrap: 'wrap' }}>
+              <h5 style={{ margin: 0 }}>Custom Upgrade Slots (For specific Missions)</h5>
+              <button
+                className="button"
+                onClick={addCustomUpgradeSlot}
+                style={{ background: '#17a2b8', fontSize: '12px' }}
+              >
+                + Add Slot
+              </button>
+            </div>
+
+            {(editingShipSelection.customUpgradeSlots || []).length === 0 ? (
+              <p style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
+                No custom upgrade slots added.
+              </p>
+            ) : (
+              <div>
+                {(editingShipSelection.customUpgradeSlots || []).map((customSlot) => {
+                  const slotKey = getCustomUpgradeKey(customSlot.id);
+                  const selectedUpgradeValue = editingShipSelection.selectedUpgrades[slotKey] || '';
+                  const availableUpgrades = upgradeService.getUpgradesForSlotCode(customSlot.slotType);
+                  const selectedUpgrade = selectedUpgradeValue ? upgradeService.getUpgradeByName(selectedUpgradeValue) : null;
+
+                  return (
+                    <div
+                      key={customSlot.id}
+                      style={{
+                        marginBottom: '12px',
+                        padding: '10px',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '6px',
+                        background: '#f8f9fa'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <input
+                              type="checkbox"
+                              checked={!!customSlot.isFree}
+                              onChange={(e) => updateCustomUpgradeSlot(customSlot.id, { isFree: e.target.checked })}
+                            />
+                            Free
+                          </label>
+                          <select
+                            value={customSlot.slotType}
+                            onChange={(e) => {
+                              updateCustomUpgradeSlot(customSlot.id, { slotType: e.target.value });
+                              handleCustomUpgradeSelection(customSlot.id, '');
+                            }}
+                            style={{
+                              padding: '6px',
+                              borderRadius: '4px',
+                              border: '1px solid #ccc',
+                              minWidth: '70px',
+                              fontFamily: 'X-Wing-Symbols, Arial, sans-serif',
+                              fontSize: '16px',
+                              textAlign: 'center'
+                            }}
+                            title="Custom slot type"
+                          >
+                            {customSlotTypeCodes.map((code) => (
+                              <option
+                                key={code}
+                                value={code}
+                                style={{ fontFamily: 'X-Wing-Symbols, Arial, sans-serif', fontSize: '16px' }}
+                                title={upgradeService.getSlotDisplayName(code)}
+                              >
+                                {code}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: '220px' }}>
+                          <Select
+                            value={selectedUpgradeValue ? { value: selectedUpgradeValue, label: getUpgradeDisplayName(selectedUpgradeValue) } : null}
+                            onChange={(selectedOption) => handleCustomUpgradeSelection(customSlot.id, selectedOption ? selectedOption.value : '')}
+                            options={[
+                              { value: '', label: '-- No Upgrade --' },
+                              ...availableUpgrades.map((upgrade) => ({
+                                value: upgradeService.getUpgradeSelectionValue(upgrade),
+                                label: upgrade.name,
+                                upgrade
+                              }))
+                            ]}
+                            formatOptionLabel={({ label, upgrade }) => {
+                              if (!upgrade) return <span>{label}</span>;
+                              return (
+                                <span>
+                                  {upgrade.name} ({Number(upgrade.cpp_cost)} XP)
+                                </span>
+                              );
+                            }}
+                            isClearable
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => removeCustomUpgradeSlot(customSlot.id)}
+                          style={{
+                            padding: '6px 10px',
+                            background: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                          title="Delete custom slot"
+                        >
+                          x
+                        </button>
+                      </div>
+
+                      {selectedUpgrade && (
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: '#495057' }}>
+                          Cost: {customSlot.isFree ? 0 : Number(selectedUpgrade.cpp_cost)} XP{customSlot.isFree ? ' (Free Slot)' : ''}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

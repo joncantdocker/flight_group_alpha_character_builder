@@ -281,7 +281,7 @@ const CharacterBuilder = () => {
   // Path selection functions
   const openPathSelection = () => {
     if (editingCharacter && pathUpgradesService.canSelectPath(editingCharacter)) {
-      setSelectedPath('');
+      setSelectedPath(editingCharacter.path && editingCharacter.path !== 'None' ? editingCharacter.path : '');
       setShowPathSelection(true);
     }
   };
@@ -339,12 +339,8 @@ const CharacterBuilder = () => {
         return;
       }
       
-      // Check path requirement for rank 2->3
-      if (editingCharacter.rank === 2 && (!editingCharacter.path || editingCharacter.path === 'None')) {
-        showSnackbar('Must select a specialization path first', 'error');
-        return;
-      }
-      
+      const isRankTwoToThree = editingCharacter.rank === 2;
+
       // Update editing character only (don't save yet)
       const updatedChar = {
         ...editingCharacter,
@@ -358,13 +354,14 @@ const CharacterBuilder = () => {
       // Add to XP log
       addXpToLog('levelup', -cost, `Level up to Rank ${updatedChar.rank} (Cost: ${cost} XP)`);
       
-      // Check if character reached rank 3 and needs path selection
-      if (updatedChar.rank === 3 && pathUpgradesService.needsPathSelection(updatedChar)) {
-        setMessage(`Leveled up to rank ${updatedChar.rank}! You must now choose a specialization path before saving!`);
+      // Always open path selection when leveling from rank 2 to rank 3.
+      if (isRankTwoToThree) {
+        setMessage(`Leveled up to rank ${updatedChar.rank}! Choose a specialization path.`);
         setTimeout(() => {
           setMessage('');
-          openPathSelection();
-        }, 2000);
+          setSelectedPath(updatedChar.path && updatedChar.path !== 'None' ? updatedChar.path : '');
+          setShowPathSelection(true);
+        }, 200);
       } else {
         setMessage(`Leveled up to rank ${updatedChar.rank}! Don't forget to save your changes.`);
         setTimeout(() => setMessage(''), 5000);
@@ -374,6 +371,30 @@ const CharacterBuilder = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const levelDown = () => {
+    if (!editingCharacter) return;
+    if (editingCharacter.rank <= 1) return;
+
+    const refund = apiService.getLevelUpCost(editingCharacter.rank - 1);
+    const confirmed = window.confirm(
+      `Level down from Rank ${editingCharacter.rank} to Rank ${editingCharacter.rank - 1}?\n\nYou will be refunded ${refund} Banked XP.`
+    );
+
+    if (!confirmed) return;
+
+    const updatedChar = {
+      ...editingCharacter,
+      rank: editingCharacter.rank - 1,
+      bankedXP: editingCharacter.bankedXP + refund
+    };
+
+    setEditingCharacter(updatedChar);
+    setHasUnsavedChanges(true);
+    addXpToLog('leveldown', refund, `Level down to Rank ${updatedChar.rank} (Refund: ${refund} XP)`);
+    setMessage(`Leveled down to rank ${updatedChar.rank}. Refunded ${refund} Banked XP.`);
+    setTimeout(() => setMessage(''), 5000);
   };
 
   const deleteCharacter = async (characterId) => {
@@ -576,14 +597,7 @@ const CharacterBuilder = () => {
     // Check XP requirement using editing character data
     if (editingCharacter.rank >= 11) return false;
     const cost = apiService.getLevelUpCost(editingCharacter.rank);
-    const hasEnoughXP = editingCharacter.bankedXP >= cost;
-    
-    // If trying to level from rank 2 to 3, must have a path selected
-    if (editingCharacter.rank === 2 && hasEnoughXP) {
-      return editingCharacter.path && editingCharacter.path !== 'None';
-    }
-    
-    return hasEnoughXP;
+    return editingCharacter.bankedXP >= cost;
   })() : false;
 
   // Get appropriate level up button text
@@ -596,11 +610,6 @@ const CharacterBuilder = () => {
     const hasEnoughXP = editingCharacter.bankedXP >= cost;
     
     if (!hasEnoughXP) return `Need ${cost} Banked XP`;
-    
-    // Check if rank 2 trying to level without path
-    if (editingCharacter.rank === 2 && (!editingCharacter.path || editingCharacter.path === 'None')) {
-      return 'Select Path First';
-    }
     
     return `🚀 Level Up (Cost: ${levelUpCost})`;
   };
@@ -916,17 +925,32 @@ const CharacterBuilder = () => {
               {editingCharacter.rank < 11 && (
                 <div>
                   <p><strong>Next Level Cost:</strong> {levelUpCost} Banked XP</p>
-                  <button
-                    className="button"
-                    onClick={levelUp}
-                    disabled={!canLevelUp || loading}
-                    style={{
-                      background: canLevelUp ? '#28a745' : '#6c757d',
-                      opacity: canLevelUp ? 1 : 0.6
-                    }}
-                  >
-                    {getLevelUpButtonText()}
-                  </button>
+                  <div className="mobile-button-row" style={{ gap: '8px' }}>
+                    <button
+                      className="button"
+                      onClick={levelUp}
+                      disabled={!canLevelUp || loading}
+                      style={{
+                        background: canLevelUp ? '#28a745' : '#6c757d',
+                        opacity: canLevelUp ? 1 : 0.6
+                      }}
+                    >
+                      {getLevelUpButtonText()}
+                    </button>
+                    <button
+                      className="button"
+                      onClick={levelDown}
+                      disabled={loading || editingCharacter.rank <= 1}
+                      style={{
+                        background: '#a6b4c0',
+                        color: '#212529',
+                        opacity: editingCharacter.rank > 1 ? 1 : 0.6
+                      }}
+                      title={editingCharacter.rank > 1 ? `Refund ${apiService.getLevelUpCost(editingCharacter.rank - 1)} Banked XP` : 'Minimum rank reached'}
+                    >
+                      ⬇ Rank Down
+                    </button>
+                  </div>
                 </div>
               )}
               {editingCharacter.rank >= 11 && (
@@ -941,48 +965,19 @@ const CharacterBuilder = () => {
               <p style={{ fontSize: '14px', color: '#6c757d' }}>
                 {pathUpgradesService.getPathDescription(editingCharacter.path || 'None')}
               </p>
-
-              {/* Path selection helper text for rank 2 */}
-              {editingCharacter.rank === 2 && (!editingCharacter.path || editingCharacter.path === 'None') && (
-                <div style={{ 
-                  background: '#fff3cd', 
-                  color: '#856404', 
-                  padding: '10px', 
-                  borderRadius: '4px', 
-                  fontSize: '14px',
-                  marginTop: '10px'
-                }}>
-                  💡 <strong>Tip:</strong> Select a specialization path now to unlock level 3 advancement!
-                </div>
-              )}
               
-              {/* Path Selection Button */}
-              {pathUpgradesService.shouldSelectPath(editingCharacter) && (
+              {/* Rank 3+ with missing path still requires selection */}
+              {editingCharacter.rank >= 3 && (!editingCharacter.path || editingCharacter.path === 'None') && (
                 <button
                   className="button"
                   onClick={openPathSelection}
                   style={{
-                    background: editingCharacter.rank >= 3 ? '#dc3545' : '#ffc107',
-                    color: editingCharacter.rank >= 3 ? 'white' : 'black',
+                    background: '#dc3545',
+                    color: 'white',
                     marginTop: '10px'
                   }}
                 >
-                  {editingCharacter.rank >= 3 ? '⚠️ Choose Path (Required)' : '📋 Choose Path (Recommended)'}
-                </button>
-              )}
-              
-              {editingCharacter.path && editingCharacter.path !== 'None' && (
-                <button
-                  className="button"
-                  onClick={openPathSelection}
-                  disabled={editingCharacter.path !== 'None'}
-                  style={{
-                    background: '#6c757d',
-                    opacity: 0.6,
-                    marginTop: '10px'
-                  }}
-                >
-                  Path Locked
+                  ⚠️ Choose Path (Required)
                 </button>
               )}
 

@@ -81,8 +81,13 @@ class ApiService {
     return this.service.getCurrentShipSelection();
   }
 
-  setCurrentShipSelection(shipKey, selectedUpgrades = {}, selectedRankUpgrades = {}) {
-    return this.service.setCurrentShipSelection(shipKey, selectedUpgrades, selectedRankUpgrades);
+  setCurrentShipSelection(shipKey, selectedUpgrades = {}, selectedRankUpgrades = {}, customUpgradeSlots = []) {
+    return this.service.setCurrentShipSelection(
+      shipKey,
+      selectedUpgrades,
+      selectedRankUpgrades,
+      customUpgradeSlots
+    );
   }
 
   clearShipSelection() {
